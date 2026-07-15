@@ -17,7 +17,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:layout_marginBottom="36dp">
+            android:layout_marginBottom="40dp">
 
             <View
                 android:layout_width="44dp"
@@ -36,16 +36,14 @@
                     android:text="Infro"
                     android:textSize="22sp"
                     android:textStyle="bold"
-                    android:textColor="@color/text_primary"
-                    android:letterSpacing="0.01" />
+                    android:textColor="@color/text_primary" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Intro &amp; Outro Detector"
                     android:textSize="12sp"
-                    android:textColor="@color/text_secondary"
-                    android:letterSpacing="0.04" />
+                    android:textColor="@color/text_secondary" />
             </LinearLayout>
         </LinearLayout>
 
@@ -53,141 +51,93 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Detect intro &amp; outro"
+            android:text="What do you want to do?"
             android:textSize="32sp"
             android:textStyle="bold"
             android:textColor="@color/text_primary"
-            android:letterSpacing="-0.01"
-            android:layout_marginBottom="10dp" />
+            android:layout_marginBottom="8dp" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Upload a signature JSON exported from the web app, then select a video. Infro will detect where the intro and outro appear using audio fingerprint matching."
+            android:text="Compare two videos to find shared segments, or detect intro/outro in a new video using a saved signature."
             android:textSize="15sp"
             android:textColor="@color/text_secondary"
             android:lineSpacingExtra="5dp"
             android:layout_marginBottom="40dp" />
 
-        <!-- Step 1: Signature -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="STEP 1 — SIGNATURE FILE"
-            android:textSize="11sp"
-            android:textStyle="bold"
-            android:textColor="@color/text_secondary"
-            android:letterSpacing="0.1"
-            android:layout_marginBottom="10dp" />
-
-        <Button
-            android:id="@+id/btnSignature"
-            android:layout_width="match_parent"
-            android:layout_height="60dp"
-            android:text="Select signature JSON"
-            android:backgroundTint="@color/card"
-            android:textColor="@color/text_primary"
-            android:textSize="15sp"
-            android:textAllCaps="false"
-            android:layout_marginBottom="12dp" />
-
-        <TextView
-            android:id="@+id/tvSignatureInfo"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="13sp"
-            android:textColor="@color/sage"
-            android:layout_marginBottom="28dp"
-            android:visibility="gone"
-            android:fontFamily="monospace" />
-
-        <!-- Step 2: Video -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="STEP 2 — VIDEO FILE"
-            android:textSize="11sp"
-            android:textStyle="bold"
-            android:textColor="@color/text_secondary"
-            android:letterSpacing="0.1"
-            android:layout_marginBottom="10dp" />
-
-        <Button
-            android:id="@+id/btnVideo"
-            android:layout_width="match_parent"
-            android:layout_height="60dp"
-            android:text="Select video"
-            android:backgroundTint="@color/card"
-            android:textColor="@color/text_primary"
-            android:textSize="15sp"
-            android:textAllCaps="false"
-            android:layout_marginBottom="12dp" />
-
-        <TextView
-            android:id="@+id/tvVideoInfo"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="13sp"
-            android:textColor="@color/sage"
-            android:layout_marginBottom="36dp"
-            android:visibility="gone"
-            android:fontFamily="monospace" />
-
-        <!-- Detect button -->
-        <Button
-            android:id="@+id/btnDetect"
-            android:layout_width="match_parent"
-            android:layout_height="64dp"
-            android:text="Detect Intro &amp; Outro"
-            android:backgroundTint="@color/primary"
-            android:textColor="@android:color/white"
-            android:textSize="17sp"
-            android:textStyle="bold"
-            android:textAllCaps="false"
-            android:letterSpacing="0.02"
-            android:enabled="false"
-            android:layout_marginBottom="28dp" />
-
-        <!-- Progress -->
-        <ProgressBar
-            android:id="@+id/progressBar"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:visibility="gone"
-            android:layout_marginBottom="12dp"
-            android:indeterminateTint="@color/primary" />
-
-        <TextView
-            android:id="@+id/tvProgress"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="14sp"
-            android:textColor="@color/text_secondary"
-            android:gravity="center"
-            android:layout_marginBottom="28dp"
-            android:visibility="gone"
-            android:fontFamily="monospace" />
-
-        <!-- Results header -->
-        <TextView
-            android:id="@+id/tvResultsHeader"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="RESULTS"
-            android:textSize="11sp"
-            android:textStyle="bold"
-            android:textColor="@color/text_secondary"
-            android:letterSpacing="0.1"
-            android:layout_marginBottom="16dp"
-            android:visibility="gone" />
-
-        <!-- Results container -->
+        <!-- Compare card -->
         <LinearLayout
-            android:id="@+id/resultsContainer"
+            android:id="@+id/cardCompare"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:visibility="gone" />
+            android:background="@drawable/card_bg"
+            android:padding="24dp"
+            android:layout_marginBottom="16dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?android:attr/selectableItemBackground">
+
+            <View
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="@drawable/logo_bg"
+                android:layout_marginBottom="16dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Compare two videos"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                android:layout_marginBottom="6dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Upload two videos and find matching intro, outro, and shared clips. Export a signature for later use."
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"
+                android:lineSpacingExtra="4dp" />
+        </LinearLayout>
+
+        <!-- Detect card -->
+        <LinearLayout
+            android:id="@+id/cardDetect"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/card_bg"
+            android:padding="24dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?android:attr/selectableItemBackground">
+
+            <View
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="@drawable/detect_bg"
+                android:layout_marginBottom="16dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Detect from signature"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                android:layout_marginBottom="6dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Upload a signature JSON and a new video. Infro will find where the intro and outro appear."
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"
+                android:lineSpacingExtra="4dp" />
+        </LinearLayout>
 
     </LinearLayout>
 </ScrollView>

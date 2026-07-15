@@ -1,4 +1,4 @@
-package com.infro.app
+package com.infro.app.audio
 
 import android.content.Context
 import android.media.MediaCodec
@@ -8,11 +8,8 @@ import android.net.Uri
 import kotlin.math.min
 
 /**
- * Extracts mono PCM audio from a video/audio file at a target sample rate.
- *
- * Uses MediaCodec to decode the audio track, then downsamples to mono + the
- * target sample rate. This is the Android equivalent of the browser's
- * AudioContext.decodeAudioData + resample.
+ * Extracts mono PCM audio from a media file at a target sample rate.
+ * Uses MediaCodec to decode the audio track, then downsamples to mono.
  */
 object AudioExtractor {
 
@@ -22,7 +19,7 @@ object AudioExtractor {
         val duration: Double
     )
 
-    fun extractPcm(context: Context, uri: Uri, targetRate: Int = 8000): PcmData {
+    fun extractPcm(context: Context, uri: Uri, targetRate: Int = 30000): PcmData {
         val extractor = MediaExtractor()
         context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
             extractor.setDataSource(pfd.fileDescriptor)
@@ -89,7 +86,6 @@ object AudioExtractor {
                     outputDone = true
                 }
                 val outputBuffer = codec.getOutputBuffer(outputBufferIndex)!!
-                // Assume 16-bit PCM
                 val chunk = decodePcm16(outputBuffer, info.size, sourceChannels)
                 pcmChunks.add(chunk)
                 codec.releaseOutputBuffer(outputBufferIndex, false)
@@ -100,7 +96,6 @@ object AudioExtractor {
         codec.release()
         extractor.release()
 
-        // Merge chunks
         val totalLen = pcmChunks.sumOf { it.size }
         val merged = FloatArray(totalLen)
         var offset = 0
@@ -109,14 +104,14 @@ object AudioExtractor {
             offset += chunk.size
         }
 
-        // Resample
         val resampled = if (sourceRate != targetRate) {
             resample(merged, sourceRate, targetRate)
         } else {
             merged
         }
 
-        val duration = if (durationUs > 0) durationUs / 1_000_000.0 else resampled.size.toDouble() / targetRate
+        val duration = if (durationUs > 0) durationUs / 1_000_000.0
+            else resampled.size.toDouble() / targetRate
 
         return PcmData(resampled, targetRate, duration)
     }
@@ -133,7 +128,6 @@ object AudioExtractor {
                 val sample = (hi shl 8) or lo
                 sum += sample
             }
-            // Mono mix + normalize to -1..1
             out[i] = (sum / channels) / 32768.0f
         }
         return out

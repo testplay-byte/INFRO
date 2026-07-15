@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="28dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Detect from Signature"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Upload a signature JSON and a video. Infro will detect where the intro and outro appear."
+            android:textSize="14sp"
+            android:textColor="@color/text_secondary"
+            android:lineSpacingExtra="4dp"
+            android:layout_marginBottom="32dp" />
+
+        <!-- Signature -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="SIGNATURE FILE"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_secondary"
+            android:letterSpacing="0.1"
+            android:layout_marginBottom="10dp" />
+
+        <Button
+            android:id="@+id/btnSignature"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="Select signature JSON"
+            android:backgroundTint="@color/card"
+            android:textColor="@color/text_primary"
+            android:textAllCaps="false"
+            android:textSize="14sp"
+            android:layout_marginBottom="24dp" />
+
+        <!-- Video -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="VIDEO FILE"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_secondary"
+            android:letterSpacing="0.1"
+            android:layout_marginBottom="10dp" />
+
+        <Button
+            android:id="@+id/btnVideo"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="Select video"
+            android:backgroundTint="@color/card"
+            android:textColor="@color/text_primary"
+            android:textAllCaps="false"
+            android:textSize="14sp"
+            android:layout_marginBottom="28dp" />
+
+        <!-- Detect -->
+        <Button
+            android:id="@+id/btnDetect"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:text="Detect Intro &amp; Outro"
+            android:backgroundTint="@color/primary"
+            android:textColor="@android:color/white"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textAllCaps="false"
+            android:enabled="false"
+            android:layout_marginBottom="24dp" />
+
+        <!-- Progress -->
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            android:indeterminateTint="@color/primary"
+            android:layout_marginBottom="12dp" />
+
+        <TextView
+            android:id="@+id/tvInfo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="13sp"
+            android:textColor="@color/text_secondary"
+            android:fontFamily="monospace"
+            android:visibility="gone" />
+
+    </LinearLayout>
+</ScrollView>
