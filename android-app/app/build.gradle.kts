@@ -11,13 +11,23 @@ android {
         applicationId = "com.infro.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 2
-        versionName = "2.0.0"
+        versionCode = 3
+        versionName = "2.1.0"
+    }
+
+    // Sign the release APK with the debug key so it's installable without a
+    // custom keystore. For production distribution you'd replace this with a
+    // real signing config, but for sideloading this is sufficient.
+    signingConfigs {
+        getByName("debug") {
+            // Uses the default debug keystore
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("debug")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

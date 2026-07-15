@@ -98,6 +98,9 @@ class CompareActivity : AppCompatActivity() {
         val a = uriA ?: return
         val b = uriB ?: return
 
+        // Disable buttons during analysis
+        btnA.isEnabled = false
+        btnB.isEnabled = false
         progressBar.visibility = View.VISIBLE
         tvInfo.visibility = View.VISIBLE
         btnAnalyze.isEnabled = false
@@ -111,16 +114,24 @@ class CompareActivity : AppCompatActivity() {
                     tvInfo.text = "$detail (${(progress * 100).toInt()}%)"
                 }
 
-                // Save result to singleton and launch results
+                if (result.matches.isEmpty() && !result.stats.detectedIntro && !result.stats.detectedOutro) {
+                    tvInfo.text = "No matches found. Try adjusting settings or using a different mode."
+                    return@launch
+                }
+
                 ResultHolder.comparisonResult = result
                 ResultHolder.resultType = ResultHolder.Type.COMPARE
                 startActivity(Intent(this@CompareActivity, ResultsActivity::class.java))
                 finish()
 
+            } catch (e: OutOfMemoryError) {
+                tvInfo.text = "Out of memory. Try shorter videos or Audio-only mode."
             } catch (e: Exception) {
-                tvInfo.text = "Error: ${e.message}"
+                tvInfo.text = "Error: ${e.message ?: "Unknown error"}"
             } finally {
                 progressBar.visibility = View.GONE
+                btnA.isEnabled = true
+                btnB.isEnabled = true
                 btnAnalyze.isEnabled = true
             }
         }
