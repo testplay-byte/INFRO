@@ -194,16 +194,16 @@ export function AndroidAppPrototype() {
 
 function HomeScreen({ onCompare, onDetect }: { onCompare: () => void; onDetect: () => void; }) {
   return (
-    <div className="relative flex flex-col min-h-[calc(800px-36px)] px-6 pt-8 pb-8 overflow-hidden">
-      {/* Animated background shapes */}
-      <AnimatedShapes />
+    <div className="relative flex flex-col min-h-[calc(800px-36px)] px-6 pt-6 pb-8 overflow-hidden">
+      {/* Animated geometric shapes filling the top area */}
+      <GeometricShapes />
 
-      {/* Logo */}
+      {/* Logo — top center */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="relative flex items-center gap-2.5 mb-auto mt-4 z-10"
+        className="relative flex items-center justify-center gap-2.5 mt-2 z-10"
       >
         <div className="w-9 h-9 rounded-xl bg-[#B45309] flex items-center justify-center shadow-sm">
           <span className="text-white font-bold text-base">I</span>
@@ -211,13 +211,13 @@ function HomeScreen({ onCompare, onDetect }: { onCompare: () => void; onDetect: 
         <span className="text-lg font-bold tracking-tight">Infro</span>
       </motion.div>
 
-      {/* Center content */}
-      <div className="relative py-8 z-10">
+      {/* Center content — centered vertically */}
+      <div className="relative flex-1 flex flex-col justify-center z-10 py-4">
         <motion.h1
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1 }}
-          className="text-[28px] font-bold leading-[1.15] mb-2"
+          className="text-[28px] font-bold leading-[1.15] mb-2 text-center"
         >
           Find intros,<br />outros &amp; matches
         </motion.h1>
@@ -225,7 +225,7 @@ function HomeScreen({ onCompare, onDetect }: { onCompare: () => void; onDetect: 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.2 }}
-          className="text-[14px] text-[#78716C] leading-relaxed mb-8"
+          className="text-[14px] text-[#78716C] leading-relaxed mb-8 text-center"
         >
           Compare two videos or detect from a signature.
         </motion.p>
@@ -275,7 +275,7 @@ function HomeScreen({ onCompare, onDetect }: { onCompare: () => void; onDetect: 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4, delay: 0.5 }}
-        className="relative flex items-center gap-1.5 text-[11px] text-[#A8A29E] z-10"
+        className="relative flex items-center justify-center gap-1.5 text-[11px] text-[#A8A29E] z-10"
       >
         <Shield className="w-3 h-3 text-[#4D7C0F]" />
         <span>All processing happens on your device</span>
@@ -284,47 +284,123 @@ function HomeScreen({ onCompare, onDetect }: { onCompare: () => void; onDetect: 
   );
 }
 
-function AnimatedShapes() {
+/** Rich animated geometric shapes — triangles, rectangles, pentagons, circles */
+function GeometricShapes() {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {/* Large amber circle top-right */}
+      {/* Large soft gradient blobs for depth */}
       <motion.div
-        animate={{ x: [0, 15, 0], y: [0, -10, 0] }}
-        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute -top-20 -right-20 w-48 h-48 rounded-full bg-[#B45309]/8 blur-2xl"
+        animate={{ x: [0, 20, 0], y: [0, -15, 0] }}
+        transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute top-0 right-[-60px] w-44 h-44 rounded-full bg-[#B45309]/8 blur-3xl"
       />
-      {/* Sage circle bottom-left */}
       <motion.div
-        animate={{ x: [0, -10, 0], y: [0, 15, 0] }}
-        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute -bottom-16 -left-16 w-40 h-40 rounded-full bg-[#4D7C0F]/8 blur-2xl"
+        animate={{ x: [0, -15, 0], y: [0, 20, 0] }}
+        transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute top-10 left-[-50px] w-36 h-36 rounded-full bg-[#4D7C0F]/8 blur-3xl"
       />
-      {/* Small floating dots */}
+
+      {/* Triangle — spinning, top right area */}
       <motion.div
-        animate={{ y: [0, -12, 0], opacity: [0.3, 0.6, 0.3] }}
+        animate={{ rotate: [0, 360] }}
+        transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+        className="absolute top-16 right-12"
+      >
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+          <path d="M16 4 L28 26 L4 26 Z" fill="#B45309" fillOpacity="0.12" stroke="#B45309" strokeWidth="1.5" />
+        </svg>
+      </motion.div>
+
+      {/* Rectangle — bouncing, left side */}
+      <motion.div
+        animate={{ y: [0, -12, 0], rotate: [0, -8, 0] }}
         transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-32 right-12 w-2 h-2 rounded-full bg-[#B45309]/30"
-      />
+        className="absolute top-24 left-10"
+      >
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+          <rect x="3" y="3" width="22" height="22" rx="4" fill="#4D7C0F" fillOpacity="0.12" stroke="#4D7C0F" strokeWidth="1.5" />
+        </svg>
+      </motion.div>
+
+      {/* Pentagon — spinning, center-top area */}
       <motion.div
-        animate={{ y: [0, 10, 0], opacity: [0.2, 0.5, 0.2] }}
-        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-        className="absolute top-48 left-8 w-1.5 h-1.5 rounded-full bg-[#4D7C0F]/30"
-      />
+        animate={{ rotate: [0, -360] }}
+        transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+        className="absolute top-12 left-1/2 -translate-x-1/2"
+      >
+        <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
+          <path d="M15 3 L27 12 L22 27 L8 27 L3 12 Z" fill="#C2410C" fillOpacity="0.12" stroke="#C2410C" strokeWidth="1.5" />
+        </svg>
+      </motion.div>
+
+      {/* Hexagon — bouncing, right side */}
       <motion.div
-        animate={{ y: [0, -8, 0], opacity: [0.2, 0.4, 0.2] }}
-        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-        className="absolute bottom-40 right-16 w-2.5 h-2.5 rounded-full bg-[#C2410C]/20"
+        animate={{ y: [0, 10, 0], rotate: [0, 15, 0] }}
+        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+        className="absolute top-32 right-8"
+      >
+        <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+          <path d="M13 2 L23 8 L23 18 L13 24 L3 18 L3 8 Z" fill="#B45309" fillOpacity="0.1" stroke="#B45309" strokeWidth="1.5" />
+        </svg>
+      </motion.div>
+
+      {/* Small circle — pulsing, left-center */}
+      <motion.div
+        animate={{ scale: [1, 1.3, 1], opacity: [0.4, 0.7, 0.4] }}
+        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute top-20 left-24 w-3 h-3 rounded-full bg-[#4D7C0F]/40"
       />
-      {/* Wave lines */}
+
+      {/* Small circle — pulsing, right-center */}
+      <motion.div
+        animate={{ scale: [1, 1.4, 1], opacity: [0.3, 0.6, 0.3] }}
+        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+        className="absolute top-28 right-20 w-2.5 h-2.5 rounded-full bg-[#B45309]/40"
+      />
+
+      {/* Diamond — spinning, lower left */}
+      <motion.div
+        animate={{ rotate: [0, 360] }}
+        transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
+        className="absolute top-40 left-6"
+      >
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M12 2 L22 12 L12 22 L2 12 Z" fill="#C2410C" fillOpacity="0.1" stroke="#C2410C" strokeWidth="1.5" />
+        </svg>
+      </motion.div>
+
+      {/* Small triangle — bouncing, lower right */}
+      <motion.div
+        animate={{ y: [0, 8, 0] }}
+        transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}
+        className="absolute top-44 right-14"
+      >
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M10 2 L18 17 L2 17 Z" fill="#4D7C0F" fillOpacity="0.15" stroke="#4D7C0F" strokeWidth="1.5" />
+        </svg>
+      </motion.div>
+
+      {/* Wavy line decoration */}
       <motion.svg
-        animate={{ opacity: [0.15, 0.3, 0.15] }}
-        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-24 left-1/2 -translate-x-1/2 w-32 h-8"
-        viewBox="0 0 120 30"
+        animate={{ opacity: [0.2, 0.4, 0.2] }}
+        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute top-36 left-1/2 -translate-x-1/2 w-40 h-8"
+        viewBox="0 0 160 30"
         fill="none"
       >
-        <path d="M0 15 Q15 5 30 15 T60 15 T90 15 T120 15" stroke="#B45309" strokeWidth="1.5" />
+        <path d="M0 15 Q20 5 40 15 T80 15 T120 15 T160 15" stroke="#B45309" strokeWidth="1.5" strokeOpacity="0.3" />
       </motion.svg>
+
+      {/* Dotted line decoration */}
+      <motion.div
+        animate={{ opacity: [0.15, 0.35, 0.15] }}
+        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+        className="absolute top-8 left-6 flex gap-1.5"
+      >
+        {[...Array(5)].map((_, i) => (
+          <div key={i} className="w-1 h-1 rounded-full bg-[#B45309]/40" />
+        ))}
+      </motion.div>
     </div>
   );
 }
@@ -528,9 +604,14 @@ function DetectSetupScreen({
   return (
     <div className="flex flex-col min-h-[calc(800px-36px)] px-6 pt-6 pb-8">
       <div className="flex items-center justify-between mb-6">
-        <button onClick={onBack} className="w-9 h-9 -ml-1.5 rounded-full flex items-center justify-center active:bg-neutral-100">
-          <ArrowLeft className="w-5 h-5" />
-        </button>
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          onClick={onBack}
+          className="h-9 px-3 rounded-xl bg-[#F5F5F0] flex items-center gap-1.5 text-[12px] font-bold text-[#1C1917]"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          Back
+        </motion.button>
         <h1 className="text-[17px] font-bold">Detect</h1>
         <button onClick={onOpenSettings} className="w-9 h-9 -mr-1.5 rounded-full flex items-center justify-center active:bg-neutral-100">
           <Settings className="w-[18px] h-[18px]" />
@@ -733,9 +814,10 @@ function ResultsScreen({
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={onBack}
-            className="w-9 h-9 rounded-xl bg-[#F5F5F0] flex items-center justify-center"
+            className="h-9 px-3 rounded-xl bg-[#F5F5F0] flex items-center justify-center gap-1.5 text-[12px] font-bold text-[#1C1917]"
           >
-            <ArrowLeft className="w-[18px] h-[18px]" />
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Back
           </motion.button>
           <h1 className="text-[15px] font-bold flex-1 text-center">Results</h1>
           <motion.button
@@ -749,36 +831,38 @@ function ResultsScreen({
         </div>
       </div>
 
-      <div className="px-4 pt-4 space-y-4">
+      <div className="px-4 pt-8 space-y-4">
         {/* Dual video previews with sticker labels */}
         <div className="grid grid-cols-2 gap-2.5">
           <div className="relative">
             <VideoPreview time={timeA} duration={DURATION} matches={matches} slot="A" />
-            {/* Sticker label A */}
-            <div className="absolute -top-2 -left-2 w-8 h-8 rounded-full bg-[#B45309] border-2 border-white shadow-md flex items-center justify-center z-10">
-              <span className="text-white font-bold text-sm">A</span>
+            {/* Sticker label A — rounded rectangle */}
+            <div className="absolute -top-2 -left-2 h-7 px-2 rounded-lg bg-[#B45309] border-2 border-white shadow-md flex items-center justify-center z-10">
+              <span className="text-white font-bold text-xs">A</span>
             </div>
           </div>
           <div className="relative">
             <VideoPreview time={timeB} duration={DURATION} matches={matches} slot="B" />
-            {/* Sticker label B */}
-            <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-[#4D7C0F] border-2 border-white shadow-md flex items-center justify-center z-10">
-              <span className="text-white font-bold text-sm">B</span>
+            {/* Sticker label B — rounded rectangle */}
+            <div className="absolute -top-2 -right-2 h-7 px-2 rounded-lg bg-[#4D7C0F] border-2 border-white shadow-md flex items-center justify-center z-10">
+              <span className="text-white font-bold text-xs">B</span>
             </div>
           </div>
         </div>
 
-        {/* Timestamps row — below videos */}
+        {/* Timestamps row with mute buttons — below videos */}
         <div className="grid grid-cols-2 gap-2.5">
-          <div className="text-center">
+          <div className="flex items-center justify-center gap-1.5">
             <span className="text-[12px] font-mono text-[#78716C] bg-white border border-[#E7E5E4] rounded-lg px-2.5 py-1">
               {fmt(timeA)} / {fmt(DURATION)}
             </span>
+            <MuteButton slot="A" />
           </div>
-          <div className="text-center">
+          <div className="flex items-center justify-center gap-1.5">
             <span className="text-[12px] font-mono text-[#78716C] bg-white border border-[#E7E5E4] rounded-lg px-2.5 py-1">
               {fmt(timeB)} / {fmt(DURATION)}
             </span>
+            <MuteButton slot="B" />
           </div>
         </div>
 
@@ -805,14 +889,14 @@ function ResultsScreen({
           <CombinedSeekBar timeA={timeA} timeB={timeB} duration={DURATION} matches={matches} onSeek={seekBoth} />
         </div>
 
-        {/* Playback controls — seek buttons as actual buttons with text */}
+        {/* Playback controls — seek buttons with text inside */}
         <div className="flex items-center justify-center gap-2 bg-white border border-[#E7E5E4] rounded-xl py-2.5 px-2">
           <motion.button
             whileTap={{ scale: 0.95 }}
-            className="flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg active:bg-neutral-100"
+            className="h-9 px-2.5 rounded-lg bg-[#F5F5F0] flex items-center gap-1.5 text-[11px] font-bold text-[#78716C]"
           >
-            <SkipBack className="w-4 h-4" />
-            <span className="text-[8px] font-bold text-[#78716C]">-10s</span>
+            <SkipBack className="w-3.5 h-3.5" />
+            <span>-10s</span>
           </motion.button>
           <motion.button
             whileTap={{ scale: 0.95 }}
@@ -823,19 +907,19 @@ function ResultsScreen({
           </motion.button>
           <motion.button
             whileTap={{ scale: 0.95 }}
-            className="flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg active:bg-neutral-100"
+            className="h-9 px-2.5 rounded-lg bg-[#F5F5F0] flex items-center gap-1.5 text-[11px] font-bold text-[#78716C]"
           >
-            <SkipForward className="w-4 h-4" />
-            <span className="text-[8px] font-bold text-[#78716C]">+10s</span>
+            <span>+10s</span>
+            <SkipForward className="w-3.5 h-3.5" />
           </motion.button>
           <div className="w-px h-8 bg-[#E7E5E4] mx-1" />
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={() => setLinked(!linked)}
-            className={cn("flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg transition-colors", linked ? "bg-[#4D7C0F]/10" : "active:bg-neutral-100")}
+            className={cn("h-9 px-2.5 rounded-lg flex items-center gap-1.5 text-[11px] font-bold transition-colors", linked ? "bg-[#4D7C0F]/10 text-[#4D7C0F]" : "bg-[#F5F5F0] text-[#78716C]")}
           >
-            {linked ? <Link2 className="w-4 h-4 text-[#4D7C0F]" /> : <Link2Off className="w-4 h-4 text-[#78716C]" />}
-            <span className={cn("text-[8px] font-bold", linked ? "text-[#4D7C0F]" : "text-[#78716C]")}>{linked ? "Linked" : "Free"}</span>
+            {linked ? <Link2 className="w-3.5 h-3.5" /> : <Link2Off className="w-3.5 h-3.5" />}
+            <span>{linked ? "Linked" : "Free"}</span>
           </motion.button>
         </div>
 
@@ -883,19 +967,19 @@ function ResultsScreen({
           </div>
         </div>
 
-        {/* Stats — dedicated section with background + border */}
+        {/* Stats — dedicated section with card grid */}
         <div className="bg-[#F5F5F0] border border-[#E7E5E4] rounded-xl p-3">
           <div className="flex items-center gap-2 mb-3">
             <BarChart3 className="w-3.5 h-3.5 text-[#B45309]" />
             <span className="text-[11px] font-bold uppercase tracking-wider text-[#78716C]">Statistics</span>
           </div>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
-            <StatRow label="Matches" value={matches.length.toString()} />
-            <StatRow label="Avg confidence" value="94%" />
-            <StatRow label="Longest match" value="12.5s" />
-            <StatRow label="Processing" value="8.3s" />
-            <StatRow label="Frames analyzed" value="120" />
-            <StatRow label="Audio samples" value="240k" />
+          <div className="grid grid-cols-2 gap-2.5">
+            <StatCard label="Matches" value={matches.length.toString()} />
+            <StatCard label="Avg confidence" value="94%" />
+            <StatCard label="Longest match" value="12.5s" />
+            <StatCard label="Processing" value="8.3s" />
+            <StatCard label="Frames analyzed" value="120" />
+            <StatCard label="Audio samples" value="240k" />
           </div>
         </div>
 
@@ -954,12 +1038,30 @@ function VideoPreview({
           <Play className="w-3.5 h-3.5 text-white translate-x-0.5" />
         </div>
       </div>
-      {/* Volume + fullscreen bottom-right */}
-      <div className="absolute bottom-1.5 right-1.5 flex gap-1">
-        <VolumeX className="w-3 h-3 text-white/60" />
-        <Maximize className="w-3 h-3 text-white/60" />
-      </div>
     </div>
+  );
+}
+
+/** Mute button — different icon shape, theme color when active */
+function MuteButton({ slot }: { slot: "A" | "B" }) {
+  const [muted, setMuted] = useState(slot === "B");
+  const themeColor = slot === "A" ? "#B45309" : "#4D7C0F";
+  return (
+    <motion.button
+      whileTap={{ scale: 0.9 }}
+      onClick={() => setMuted(!muted)}
+      className="w-7 h-7 rounded-lg flex items-center justify-center border transition-colors"
+      style={{
+        backgroundColor: muted ? "transparent" : `${themeColor}15`,
+        borderColor: muted ? "#E7E5E4" : `${themeColor}40`,
+      }}
+    >
+      {muted ? (
+        <VolumeX className="w-3.5 h-3.5 text-[#78716C]" />
+      ) : (
+        <Volume2 className="w-3.5 h-3.5" style={{ color: themeColor }} />
+      )}
+    </motion.button>
   );
 }
 
@@ -1075,11 +1177,11 @@ function DualTimeline({
   );
 }
 
-function StatRow({ label, value }: { label: string; value: string }) {
+function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between">
-      <span className="text-[12px] text-[#78716C]">{label}</span>
-      <span className="text-[13px] font-bold font-mono">{value}</span>
+    <div className="bg-white border border-[#E7E5E4] rounded-xl p-2.5">
+      <p className="text-[9px] font-medium uppercase tracking-wider text-[#78716C]">{label}</p>
+      <p className="text-lg font-bold mt-0.5">{value}</p>
     </div>
   );
 }
