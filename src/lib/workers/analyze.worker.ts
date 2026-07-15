@@ -76,12 +76,12 @@ function report(
 /** Build the video fingerprint streams (dHash + color) from a frame pack. */
 function buildVideoStreams(pack: FramePack, duration: number): FingerprintStream[] {
   const { width, height, count, times, pixels } = pack;
-  const hashes = new BigInt64Array(count);
+  const hashes = new Uint32Array(count);
   const colorVectors: Float32Array[] = [];
   const dhashVectors: Float32Array[] = []; // placeholders so streamLength via hashes works
 
   const gw = 9;
-  const gh = 8;
+  const gh = 4; // 4 rows × 8 comparisons = 32 bits
   const gray = new Uint8Array(gw * gh);
 
   for (let f = 0; f < count; f++) {

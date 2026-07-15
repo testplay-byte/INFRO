@@ -46,8 +46,8 @@ export interface FingerprintStream {
   times: Float32Array;
   /** Feature vectors — interpretation depends on `kind`. */
   vectors: Float32Array[];
-  /** For hash streams: packed 64-bit hashes as BigInt64Array (else null). */
-  hashes: BigInt64Array | null;
+  /** For hash streams: packed 32-bit hashes as Uint32Array (else null). */
+  hashes: Uint32Array | null;
   /** Original length of the source media this stream was derived from. */
   sourceDuration: number;
 }

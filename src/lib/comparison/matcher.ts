@@ -47,15 +47,15 @@ function maybeDecimate(stream: FingerprintStream): FingerprintStream {
   const step = Math.ceil(n / MAX_FRAMES);
   const vectors: Float32Array[] = [];
   const times: number[] = [];
-  let hashes: BigInt64Array | null = null;
+  let hashes: Uint32Array | null = null;
   if (stream.hashes) {
-    const arr: bigint[] = [];
+    const arr: number[] = [];
     for (let i = 0; i < n; i += step) {
       vectors.push(stream.vectors[i]);
       times.push(stream.times[i]);
       arr.push(stream.hashes[i]);
     }
-    hashes = BigInt64Array.from(arr);
+    hashes = Uint32Array.from(arr);
   } else {
     for (let i = 0; i < n; i += step) {
       vectors.push(stream.vectors[i]);

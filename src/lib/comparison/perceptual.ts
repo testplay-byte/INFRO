@@ -8,48 +8,47 @@
  */
 
 /**
- * Compute a 64-bit difference hash (dHash) from a grayscale grid.
- * The grid is expected to be 9 wide × 8 tall (72 pixels → 64 comparison
- * bits). If a different size is supplied we just compare horizontally
- * adjacent pixels and pack the bits.
- *
- * Returns a BigInt64Array of length 1 (kept as array for symmetry with
- * batch helpers).
+ * Compute a 32-bit difference hash (dHash) from a grayscale grid.
+ * Uses the top 4 rows × 8 horizontal comparisons = 32 bits. Regular
+ * number arithmetic keeps this fast in the browser (BigInt is ~50× slower
+ * for this workload).
  */
 export function computeDHash(
   gray: Uint8Array,
   width: number,
   height: number,
-): bigint {
-  let hash = 0n;
-  let bit = 0n;
-  // Compare left vs right neighbour on each row — produces width-1 bits
-  // per row. We cap at 64 bits.
-  for (let y = 0; y < height && bit < 64n; y++) {
-    for (let x = 0; x < width - 1 && bit < 64n; x++) {
+): number {
+  let hash = 0;
+  let bit = 0;
+  const rows = Math.min(height, 4);
+  for (let y = 0; y < rows && bit < 32; y++) {
+    for (let x = 0; x < width - 1 && bit < 32; x++) {
       const left = gray[y * width + x];
       const right = gray[y * width + x + 1];
-      if (left > right) hash |= 1n << bit;
+      if (left > right) hash |= 1 << bit;
       bit++;
     }
   }
-  return hash;
+  // force unsigned
+  return hash >>> 0;
 }
 
-/** Number of differing bits between two 64-bit hashes. */
-export function hammingDistance(a: bigint, b: bigint): number {
-  let x = a ^ b;
-  let count = 0;
-  while (x) {
-    x &= x - 1n;
-    count++;
-  }
-  return count;
+/** Bit-count of a 32-bit integer (population count). */
+export function popcount(x: number): number {
+  x = x - ((x >>> 1) & 0x55555555);
+  x = (x & 0x33333333) + ((x >>> 2) & 0x33333333);
+  x = (x + (x >>> 4)) & 0x0f0f0f0f;
+  return Math.imul(x, 0x01010101) >>> 24;
 }
 
-/** Normalized similarity in [0,1] from two 64-bit hashes (1 = identical). */
-export function hashSimilarity(a: bigint, b: bigint): number {
-  return 1 - hammingDistance(a, b) / 64;
+/** Number of differing bits between two 32-bit hashes. */
+export function hammingDistance(a: number, b: number): number {
+  return popcount((a ^ b) >>> 0);
+}
+
+/** Normalized similarity in [0,1] from two 32-bit hashes (1 = identical). */
+export function hashSimilarity(a: number, b: number): number {
+  return 1 - hammingDistance(a, b) / 32;
 }
 
 /**
