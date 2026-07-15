@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import {
+  formatTime,
   formatDuration,
   formatPercent,
   formatBytes,
