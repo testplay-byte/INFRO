@@ -29,8 +29,8 @@ export const SUPPORTED_EXTENSIONS = [
 
 /** Maximum audio duration (seconds) we attempt to fully analyze. */
 const MAX_AUDIO_DURATION = 1200; // 20 minutes
-/** Hard cap on PCM samples sent to the worker (~10 MB at 8 kHz × 20 min). */
-const MAX_PCM_SAMPLES = 8000 * MAX_AUDIO_DURATION;
+/** Hard cap on PCM samples sent to the worker. Scales with target rate. */
+const MAX_PCM_SAMPLES = 30000 * MAX_AUDIO_DURATION;
 
 /** Validate an uploaded file. Returns an error string or null when OK. */
 export function validateFile(file: File): string | null {
@@ -206,7 +206,7 @@ export async function extractFrames(
 export async function extractAudio(
   file: File,
   _onProgress: (p: number) => void,
-  targetRate = 8000,
+  targetRate = 30000,
 ): Promise<AudioPack | null> {
   let arrayBuffer: ArrayBuffer | null = null;
   let audioCtx: AudioContext | null = null;
@@ -218,18 +218,31 @@ export async function extractAudio(
         .webkitAudioContext;
     if (!AudioCtx) return null;
 
-    // Create the context at the target sample rate so decodeAudioData
-    // resamples for us — this is the single biggest memory saving.
-    audioCtx = new AudioCtx({ sampleRate: targetRate });
+    // Create the context at the target sample rate. Some browsers reject
+    // non-standard rates (e.g. 30000) — fall back to the nearest standard
+    // rate if construction fails.
+    const fallbackRates = [targetRate, 32000, 22050, 16000, 8000];
+    let actualRate = targetRate;
+    for (const rate of fallbackRates) {
+      try {
+        audioCtx = new AudioCtx({ sampleRate: rate });
+        actualRate = rate;
+        break;
+      } catch {
+        // try next rate
+      }
+    }
+    if (!audioCtx) {
+      // Last resort: default context
+      audioCtx = new AudioCtx();
+      actualRate = audioCtx.sampleRate;
+    }
 
     let audioBuffer: AudioBuffer;
     try {
-      // Pass the buffer directly; most engines copy internally. If it
-      // throws due to detachment we fall back to a copy.
       audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
     } catch {
       if (!arrayBuffer || arrayBuffer.byteLength === 0) {
-        // Buffer was detached — re-read and retry with an explicit copy.
         arrayBuffer = await file.arrayBuffer();
       }
       try {
@@ -243,10 +256,10 @@ export async function extractAudio(
       }
     }
 
-    // Release the encoded bytes immediately — we have the decoded PCM now.
+    // Release the encoded bytes immediately.
     arrayBuffer = null;
 
-    // Mix to mono (at the low sample rate — tiny).
+    // Mix to mono (at the target sample rate).
     const channels: Float32Array[] = [];
     for (let c = 0; c < audioBuffer.numberOfChannels; c++) {
       channels.push(audioBuffer.getChannelData(c) as Float32Array);

@@ -95,9 +95,9 @@ export function SettingsDialog({ open, onOpenChange }: Props) {
             >
               <Slider
                 value={[settings.audioSampleRate]}
-                min={6000}
-                max={16000}
-                step={1000}
+                min={8000}
+                max={48000}
+                step={2000}
                 onValueChange={(v) => set({ audioSampleRate: v[0] })}
               />
             </Field>

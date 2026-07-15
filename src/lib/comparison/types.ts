@@ -227,7 +227,7 @@ export interface AnalysisSettings {
 export const DEFAULT_SETTINGS: AnalysisSettings = {
   mode: "combined",
   frameSampleRate: 2,
-  audioSampleRate: 8000,
+  audioSampleRate: 30000,
   similarityThreshold: 0.9,
   minMatchDuration: 10,
   maxGap: 1.0,

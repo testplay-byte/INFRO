@@ -114,7 +114,7 @@ class MainActivity : AppCompatActivity() {
                 tvProgress.text = "Decoding audio from video..."
 
                 val audioPcm = withContext(Dispatchers.IO) {
-                    AudioExtractor.extractPcm(this@MainActivity, video, 8000)
+                    AudioExtractor.extractPcm(this@MainActivity, video, 30000)
                 }
 
                 tvProgress.text = "Generating fingerprints..."
@@ -138,35 +138,61 @@ class MainActivity : AppCompatActivity() {
     private fun showResults(detections: List<SegmentDetection>) {
         resultsContainer.removeAllViews()
 
+        // Show results header
+        val resultsHeader = findViewById<TextView>(R.id.tvResultsHeader)
+        resultsHeader.visibility = View.VISIBLE
+
         if (detections.isEmpty()) {
             val tv = TextView(this).apply {
                 text = "No segments detected"
-                textSize = 14f
+                textSize = 15f
                 setTextColor(getColor(R.color.text_secondary))
+                setPadding(0, 24, 0, 24)
             }
             resultsContainer.addView(tv)
         } else {
             for (det in detections) {
                 val view = layoutInflater.inflate(R.layout.item_detection, resultsContainer, false)
+
+                // Label badge
                 view.findViewById<TextView>(R.id.tvLabel).apply {
-                    text = det.label
-                    val color = if (det.label == "intro") R.color.sage else R.color.copper
-                    setTextColor(getColor(color))
-                    setBackgroundColor(getColor(color) and 0x1AFFFFFF)
+                    text = det.label.uppercase()
+                    val colorRes = if (det.label == "intro") R.color.sage else R.color.copper
+                    val color = getColor(colorRes)
+                    setTextColor(color)
+                    // Semi-transparent background
+                    val bgDrawable = android.graphics.drawable.GradientDrawable().apply {
+                        cornerRadius = 24f
+                        setColor(color and 0x22FFFFFF)
+                    }
+                    background = bgDrawable
                 }
+
+                // Confidence
                 view.findViewById<TextView>(R.id.tvConfidence).apply {
-                    text = if (det.found) "${(det.confidence * 100).toInt()}%" else "not found"
+                    text = if (det.found) "${(det.confidence * 100).toInt()}%" else "—"
                     setTextColor(if (det.found) getColor(R.color.sage) else getColor(R.color.text_secondary))
                 }
+
+                // Time range
                 view.findViewById<TextView>(R.id.tvTimeRange).apply {
-                    text = if (det.found) "${formatTime(det.start)} → ${formatTime(det.end)}" else "—"
+                    text = if (det.found) "${formatTime(det.start)} → ${formatTime(det.end)}" else "Not found"
                 }
+
+                // Duration
                 view.findViewById<TextView>(R.id.tvDuration).apply {
-                    text = if (det.found) "Duration: ${formatTime(det.end - det.start)}" else "Segment not found in this video"
+                    text = if (det.found) {
+                        "Duration: ${formatTime(det.end - det.start)} · original: ${formatTime(det.signatureStart)}–${formatTime(det.signatureEnd)}"
+                    } else {
+                        "Segment not found in this video"
+                    }
                 }
+
+                // Method
                 view.findViewById<TextView>(R.id.tvMethod).apply {
-                    text = if (det.found) det.method.joinToString(" + ") else ""
+                    text = if (det.found) "matched via: ${det.method.joinToString(" + ")}" else ""
                 }
+
                 resultsContainer.addView(view)
             }
         }
@@ -176,8 +202,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun formatTime(seconds: Double): String {
-        val m = (seconds / 60).toInt()
-        val s = (seconds % 60).toInt()
+        val totalSecs = seconds.toInt()
+        val m = totalSecs / 60
+        val s = totalSecs % 60
         return "%d:%02d".format(m, s)
     }
 }
