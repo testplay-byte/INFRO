@@ -30,7 +30,7 @@ import type {
   Match,
   AnalysisSettings,
 } from "./types";
-import { hashSimilarity, cosineSimilarity } from "./perceptual";
+import { hashSimilarity, cosineSimilarity, UNIFORM_FRAME_HASH } from "./perceptual";
 import {
   streamLength,
   rawToMatches,
@@ -49,6 +49,13 @@ function quantizeVector(v: Float32Array): number {
     if (v[i] >= mean) key |= 1 << i;
   }
   return key;
+}
+
+/** Check if an audio chroma vector is near-silent (all zeros or near-uniform). */
+function isSilentChroma(v: Float32Array): boolean {
+  let energy = 0;
+  for (let i = 0; i < v.length; i++) energy += v[i] * v[i];
+  return energy < 0.01;
 }
 
 /** Per-frame similarity dispatch based on stream kind. */
@@ -71,6 +78,8 @@ function buildHashTable(stream: FingerprintStream): Map<number, number[]> {
   if (stream.hashes) {
     for (let j = 0; j < n; j++) {
       const key = stream.hashes[j];
+      // Skip uniform/black frames — they cause false matches
+      if (key === UNIFORM_FRAME_HASH) continue;
       let arr = table.get(key);
       if (!arr) {
         arr = [];
@@ -80,6 +89,8 @@ function buildHashTable(stream: FingerprintStream): Map<number, number[]> {
     }
   } else {
     for (let j = 0; j < n; j++) {
+      // Skip silent audio frames — they produce degenerate chroma vectors
+      if (isSilentChroma(stream.vectors[j])) continue;
       const key = quantizeVector(stream.vectors[j]);
       let arr = table.get(key);
       if (!arr) {
@@ -133,7 +144,11 @@ export function matchByOffsetHistogram(
     let key: number;
     if (A.hashes) {
       key = A.hashes[i];
+      // Skip uniform/black frames — they never match legitimately
+      if (key === UNIFORM_FRAME_HASH) continue;
     } else {
+      // Skip silent audio frames
+      if (isSilentChroma(A.vectors[i])) continue;
       key = quantizeVector(A.vectors[i]);
     }
 

@@ -148,7 +148,7 @@ export function SettingsDialog({ open, onOpenChange }: Props) {
               <Slider
                 value={[settings.matchDensity]}
                 min={0.3}
-                max={0.9}
+                max={0.95}
                 step={0.05}
                 onValueChange={(v) => set({ matchDensity: v[0] })}
               />

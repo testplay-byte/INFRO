@@ -28,6 +28,14 @@ interface FileSlot {
   audioAvailable: boolean | null;
 }
 
+/** Cached extraction data for retry — avoids re-extracting frames/audio. */
+interface CachedExtraction {
+  framesA: unknown | null;
+  framesB: unknown | null;
+  audioA: unknown | null;
+  audioB: unknown | null;
+}
+
 interface AppState {
   viewMode: ViewMode;
   slotA: FileSlot;
@@ -35,6 +43,8 @@ interface AppState {
   /** Signature file for detect mode. */
   signatureFile: File | null;
   signatureData: SignatureData | null;
+  /** Cached extraction data for retry. */
+  cachedExtraction: CachedExtraction | null;
   settings: AnalysisSettings;
   status: AppStatus;
   stages: StageProgress[];
@@ -52,6 +62,7 @@ interface AppState {
   setFile: (slot: "A" | "B", file: File | null, meta: MediaMeta | null) => void;
   setAudioAvailability: (slot: "A" | "B", available: boolean) => void;
   setSignature: (file: File | null, data: SignatureData | null) => void;
+  setCachedExtraction: (cache: CachedExtraction | null) => void;
   updateSettings: (patch: Partial<AnalysisSettings>) => void;
   resetSettings: () => void;
   setStatus: (s: AppStatus, error?: string) => void;
@@ -77,6 +88,7 @@ export const useStore = create<AppState>((set, get) => ({
   slotB: { ...emptySlot },
   signatureFile: null,
   signatureData: null,
+  cachedExtraction: null,
   settings: { ...DEFAULT_SETTINGS },
   status: "idle",
   stages: [],
@@ -136,6 +148,8 @@ export const useStore = create<AppState>((set, get) => ({
       currentStage: null,
       error: null,
     }),
+
+  setCachedExtraction: (cache) => set({ cachedExtraction: cache }),
 
   updateSettings: (patch) =>
     set((s) => ({ settings: { ...s.settings, ...patch } })),

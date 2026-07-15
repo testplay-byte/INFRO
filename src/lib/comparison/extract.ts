@@ -159,7 +159,7 @@ export async function extractFrames(
       throw new Error("Video is longer than 2 hours. Please use a shorter clip.");
     }
 
-    const MAX_FRAMES = 300;
+    const MAX_FRAMES = 600;
     let count = Math.max(2, Math.floor(duration * fps));
     if (count > MAX_FRAMES) count = MAX_FRAMES;
     const effFps = (count - 1) / duration;

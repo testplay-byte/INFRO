@@ -7,17 +7,50 @@
  * signature.
  */
 
+/** Sentinel hash value for uniform/black frames — never matches anything. */
+export const UNIFORM_FRAME_HASH = 0xffffffff;
+
+/**
+ * Compute the variance of a grayscale grid. Used to detect uniform/black
+ * frames (fade-to-black, solid color cards) that produce degenerate hashes
+ * and cause false-positive matches at video boundaries.
+ */
+export function grayVariance(
+  gray: Uint8Array,
+): number {
+  if (gray.length === 0) return 0;
+  let sum = 0;
+  for (let i = 0; i < gray.length; i++) sum += gray[i];
+  const mean = sum / gray.length;
+  let variance = 0;
+  for (let i = 0; i < gray.length; i++) {
+    const d = gray[i] - mean;
+    variance += d * d;
+  }
+  return variance / gray.length;
+}
+
 /**
  * Compute a 32-bit difference hash (dHash) from a grayscale grid.
  * Uses the top 4 rows × 8 horizontal comparisons = 32 bits. Regular
  * number arithmetic keeps this fast in the browser (BigInt is ~50× slower
  * for this workload).
+ *
+ * If the frame has very low variance (uniform/black), returns UNIFORM_FRAME_HASH
+ * — a sentinel that never matches, preventing false positives from
+ * fade-to-black sections at video endings.
  */
 export function computeDHash(
   gray: Uint8Array,
   width: number,
   height: number,
 ): number {
+  // Detect uniform/black frames — these produce degenerate hashes where
+  // every bit is 0, causing false matches between any two black frames.
+  if (grayVariance(gray) < 25) {
+    return UNIFORM_FRAME_HASH;
+  }
+
   let hash = 0;
   let bit = 0;
   const rows = Math.min(height, 4);
@@ -46,8 +79,12 @@ export function hammingDistance(a: number, b: number): number {
   return popcount((a ^ b) >>> 0);
 }
 
-/** Normalized similarity in [0,1] from two 32-bit hashes (1 = identical). */
+/**
+ * Normalized similarity in [0,1] from two 32-bit hashes (1 = identical).
+ * Returns 0 for any uniform-frame sentinel — those never match.
+ */
 export function hashSimilarity(a: number, b: number): number {
+  if (a === UNIFORM_FRAME_HASH || b === UNIFORM_FRAME_HASH) return 0;
   return 1 - hammingDistance(a, b) / 32;
 }
 

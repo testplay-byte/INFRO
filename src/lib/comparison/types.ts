@@ -213,7 +213,7 @@ export const DEFAULT_SETTINGS: AnalysisSettings = {
   similarityThreshold: 0.9,
   minMatchDuration: 10,
   maxGap: 1.0,
-  matchDensity: 0.6,
+  matchDensity: 0.9,
   precision: "balanced",
   gpuAcceleration: true,
 };

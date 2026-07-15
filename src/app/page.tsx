@@ -39,11 +39,14 @@ export default function Home() {
   const slotB = useStore((s) => s.slotB);
   const signatureData = useStore((s) => s.signatureData);
   const setStatus = useStore((s) => s.setStatus);
-  const { run, runDetect } = useComparison();
+  const { run, runDetect, retry } = useComparison();
 
   return (
     <div className="flex min-h-screen flex-col bg-grain">
-      <Header onOpenSettings={() => setSettingsOpen(true)} />
+      <Header
+        onOpenSettings={() => setSettingsOpen(true)}
+        onRetry={viewMode === "compare" ? retry : undefined}
+      />
       <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
 
       <main className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 sm:px-6 sm:py-8">

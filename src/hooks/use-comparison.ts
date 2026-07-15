@@ -162,6 +162,14 @@ export function useComparison() {
 
       if (abortRef.current.aborted) return;
 
+      // Cache extraction data for retry
+      useStore.getState().setCachedExtraction({
+        framesA,
+        framesB,
+        audioA,
+        audioB,
+      });
+
       // --- Worker: fingerprint + match ---
       useStore.getState().pushStage({
         stage: "fingerprinting",
@@ -466,7 +474,124 @@ export function useComparison() {
     useStore.getState().reset();
   }, [terminateWorker]);
 
-  return { run, runDetect, abort, reset };
+  /**
+   * Retry analysis using cached extraction data. Skips the slow frame/audio
+   * extraction and re-runs only the worker matching with the current
+   * (potentially updated) settings.
+   */
+  const retry = useCallback(async () => {
+    const state = useStore.getState();
+    const { cachedExtraction, slotA, slotB, settings } = state;
+    if (!cachedExtraction || !slotA.meta || !slotB.meta) {
+      // No cached data — fall back to full run
+      return run();
+    }
+
+    abortRef.current = { aborted: false };
+    useStore.getState().setStatus("processing");
+    useStore.getState().pushStage({
+      stage: "fingerprinting",
+      label: "Re-analyzing with new settings",
+      progress: 0.1,
+    });
+
+    const startWall = performance.now();
+
+    try {
+      terminateWorker();
+      const worker = new Worker(
+        new URL("../lib/workers/analyze.worker.ts", import.meta.url),
+        { type: "module" },
+      );
+      workerRef.current = worker;
+
+      const result = await new Promise<ComparisonResult>((resolve, reject) => {
+        let settled = false;
+        let watchdogId: ReturnType<typeof setTimeout>;
+        const armWatchdog = () => {
+          if (watchdogId) clearTimeout(watchdogId);
+          watchdogId = setTimeout(() => {
+            if (!settled) {
+              settled = true;
+              reject(new Error("Analysis stalled — no progress for 45 seconds."));
+            }
+          }, 45000);
+        };
+        armWatchdog();
+
+        const absoluteDeadline = setTimeout(() => {
+          if (!settled) {
+            settled = true;
+            reject(new Error("Analysis exceeded the 3-minute time limit."));
+          }
+        }, 180000);
+
+        const cleanup = () => {
+          if (watchdogId) clearTimeout(watchdogId);
+          clearTimeout(absoluteDeadline);
+          worker.removeEventListener("message", onMsg);
+        };
+
+        const onMsg = (e: MessageEvent<WorkerOut>) => {
+          if (settled) return;
+          const msg = e.data;
+          if (msg.type === "progress") {
+            armWatchdog();
+            useStore.getState().updateStage(msg.data as StageProgress);
+          } else if (msg.type === "result") {
+            settled = true;
+            cleanup();
+            resolve(msg.data);
+          } else if (msg.type === "error") {
+            settled = true;
+            cleanup();
+            reject(new Error(msg.message));
+          }
+        };
+        worker.addEventListener("message", onMsg);
+        worker.addEventListener("error", (err) => {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          reject(new Error(err.message || "Worker crashed during retry."));
+        });
+
+        const req: AnalyzeRequest = {
+          type: "analyze",
+          framesA: cachedExtraction.framesA as FramePack | null,
+          framesB: cachedExtraction.framesB as FramePack | null,
+          audioA: cachedExtraction.audioA as AudioPack | null,
+          audioB: cachedExtraction.audioB as AudioPack | null,
+          metaA: slotA.meta!,
+          metaB: slotB.meta!,
+          settings,
+        };
+        worker.postMessage(req);
+      });
+
+      terminateWorker();
+      if (abortRef.current.aborted) return;
+      useStore.getState().setResult(result, performance.now() - startWall);
+      toast({
+        title: "Re-analysis complete",
+        description: `${result.stats.totalMatches} matching region${
+          result.stats.totalMatches === 1 ? "" : "s"
+        } detected.`,
+      });
+    } catch (err) {
+      terminateWorker();
+      if (abortRef.current.aborted) return;
+      const message = err instanceof Error ? err.message : String(err);
+      useStore.getState().setStatus("error", message);
+      toast({
+        title: "Re-analysis failed",
+        description: message,
+        variant: "destructive",
+      });
+    }
+  }, [terminateWorker, toast, run]);
+
+  return { run, runDetect, retry, abort, reset };
 }
 
 /** Parse a signature JSON file. Returns null on invalid JSON. */

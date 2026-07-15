@@ -1,6 +1,6 @@
 "use client";
 
-import { Settings, Github, RotateCcw, Sparkles } from "lucide-react";
+import { Settings, Github, RotateCcw, Sparkles, RefreshCw } from "lucide-react";
 import { useStore } from "@/lib/store";
 import type { ComparisonMode } from "@/lib/comparison/types";
 import { cn } from "@/lib/utils";
@@ -22,7 +22,13 @@ const MODES: { value: ComparisonMode; label: string; hint: string }[] = [
   },
 ];
 
-export function Header({ onOpenSettings }: { onOpenSettings: () => void }) {
+export function Header({
+  onOpenSettings,
+  onRetry,
+}: {
+  onOpenSettings: () => void;
+  onRetry?: () => void;
+}) {
   const mode = useStore((s) => s.settings.mode);
   const updateSettings = useStore((s) => s.updateSettings);
   const hasResult = useStore((s) => s.status === "done");
@@ -88,6 +94,17 @@ export function Header({ onOpenSettings }: { onOpenSettings: () => void }) {
             >
               <RotateCcw className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">New analysis</span>
+            </Button>
+          )}
+          {hasResult && onRetry && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onRetry}
+              className="gap-1.5"
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Re-analyze</span>
             </Button>
           )}
           <Button
