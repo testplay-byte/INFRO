@@ -41,33 +41,33 @@ class SettingsBottomSheet(
         val sliderAudioRate = findViewById<SeekBar>(R.id.sliderAudioRate)
         val btnApply = findViewById<Button>(R.id.btnApply)
 
-        // Setup sliders
+        // Setup sliders — settings use Double internally, sliders use Int
         sliderThreshold.max = 28 // 70-98
-        sliderThreshold.progress = settings.similarityThreshold - 70
-        tvThreshold.text = "${settings.similarityThreshold}%"
+        sliderThreshold.progress = (settings.similarityThreshold * 100).toInt() - 70
+        tvThreshold.text = "${(settings.similarityThreshold * 100).toInt()}%"
         sliderThreshold.setOnSeekBarChangeListener(simpleListener { v ->
-            settings.similarityThreshold = v + 70
+            settings.similarityThreshold = (v + 70) / 100.0
             tvThreshold.text = "${v + 70}%"
         })
 
         sliderMinDur.max = 28 // 2-30
-        sliderMinDur.progress = settings.minMatchDuration - 2
-        tvMinDur.text = "${settings.minMatchDuration}s"
+        sliderMinDur.progress = settings.minMatchDuration.toInt() - 2
+        tvMinDur.text = "${settings.minMatchDuration.toInt()}s"
         sliderMinDur.setOnSeekBarChangeListener(simpleListener { v ->
-            settings.minMatchDuration = v + 2
+            settings.minMatchDuration = (v + 2).toDouble()
             tvMinDur.text = "${v + 2}s"
         })
 
         sliderMaxGap.max = 27 // 0.3-3.0 (step 0.1)
         sliderMaxGap.progress = ((settings.maxGap - 0.3) * 10).toInt()
-        tvMaxGap.text = "${settings.maxGap}s"
+        tvMaxGap.text = "%.1fs".format(settings.maxGap)
         sliderMaxGap.setOnSeekBarChangeListener(simpleListener { v ->
             settings.maxGap = (v + 3) / 10.0
             tvMaxGap.text = "%.1fs".format(settings.maxGap)
         })
 
         sliderDensity.max = 13 // 30-95 step 5
-        sliderDensity.progress = (settings.matchDensity - 30) / 5
+        sliderDensity.progress = ((settings.matchDensity * 100).toInt() - 30) / 5
         tvDensity.text = "${(settings.matchDensity * 100).toInt()}%"
         sliderDensity.setOnSeekBarChangeListener(simpleListener { v ->
             settings.matchDensity = (v * 5 + 30) / 100.0
