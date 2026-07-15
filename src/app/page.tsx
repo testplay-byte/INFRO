@@ -42,7 +42,7 @@ export default function Home() {
   const { run, runDetect, retry } = useComparison();
 
   return (
-    <div className="flex min-h-screen flex-col bg-grain">
+    <div className="flex min-h-screen flex-col">
       <Header
         onOpenSettings={() => setSettingsOpen(true)}
         onRetry={viewMode === "compare" ? retry : undefined}
@@ -220,6 +220,57 @@ function IdleView({
           />
         </section>
       )}
+
+      {/* Method guidance */}
+      {viewMode === "compare" && (
+        <section className="rounded-2xl border border-border bg-card p-6">
+          <h2 className="text-base font-bold">Choosing the right mode</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Each mode has different performance and accuracy tradeoffs. Here&apos;s
+            our recommendation based on deep analysis.
+          </p>
+          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+            <MethodCard
+              badge="Recommended"
+              badgeAccent="sage"
+              title="Audio"
+              performance="Fast"
+              accuracy="High for music"
+              description="Best for real-time playback detection. Chroma features are robust to key/tempo changes and audio extraction is ~10× faster than video."
+              bestFor="Intros/outros with reused music, theme songs, voice-overs"
+            />
+            <MethodCard
+              badge=""
+              badgeAccent="muted"
+              title="Video"
+              performance="Slow"
+              accuracy="High for visuals"
+              description="Frame extraction requires seeking which is DOM-bound and slow. Best when audio was replaced but visuals are identical."
+              bestFor="Silent intros, visual-only logos, audio-swapped content"
+            />
+            <MethodCard
+              badge="Most accurate"
+              badgeAccent="primary"
+              title="Combined"
+              performance="Moderate"
+              accuracy="Highest"
+              description="Fuses both signals. Catches matches that either mode alone would miss. Use for offline analysis where accuracy matters more than speed."
+              bestFor="Final verification, ambiguous cases, production analysis"
+            />
+          </div>
+          <div className="mt-4 rounded-xl border border-sage/30 bg-sage/5 p-4">
+            <p className="text-sm font-medium text-foreground">
+              For your playback app: use <span className="font-bold text-sage">Audio</span> mode
+            </p>
+            <p className="mt-1 text-[13px] text-muted-foreground">
+              Audio fingerprinting is fast enough for real-time detection during
+              playback (~10ms per 1-second window). Export an audio signature from
+              Compare mode, then use Detect mode or integrate the signature into
+              your player to auto-skip intros/outros live.
+            </p>
+          </div>
+        </section>
+      )}
     </div>
   );
 }
@@ -323,14 +374,14 @@ function Feature({
 
 function Footer() {
   return (
-    <footer className="mt-auto border-t border-border/60 bg-background/60">
-      <div className="mx-auto flex max-w-[1400px] flex-col items-center justify-between gap-2 px-4 py-4 text-[11px] text-muted-foreground sm:flex-row sm:px-6">
+    <footer className="mt-auto border-t border-border bg-muted/30">
+      <div className="mx-auto flex max-w-[1400px] flex-col items-center justify-between gap-2 px-4 py-4 text-xs text-muted-foreground sm:flex-row sm:px-6">
         <div className="flex items-center gap-1.5">
-          <Lock className="h-3 w-3 text-sage" />
+          <Lock className="h-3.5 w-3.5 text-sage" />
           <span>All processing happens locally in your browser.</span>
         </div>
         <div className="flex items-center gap-3">
-          <span className="font-mono">v1.1.0</span>
+          <span className="font-mono">v1.2.0</span>
           <span className="opacity-40">·</span>
           <a
             href="https://github.com/testplay-byte/INFRO"
@@ -343,5 +394,62 @@ function Footer() {
         </div>
       </div>
     </footer>
+  );
+}
+
+function MethodCard({
+  badge,
+  badgeAccent,
+  title,
+  performance,
+  accuracy,
+  description,
+  bestFor,
+}: {
+  badge: string;
+  badgeAccent: "sage" | "primary" | "muted";
+  title: string;
+  performance: string;
+  accuracy: string;
+  description: string;
+  bestFor: string;
+}) {
+  return (
+    <div className="rounded-xl border border-border bg-background p-5">
+      <div className="flex items-center justify-between">
+        <h3 className="text-base font-bold">{title}</h3>
+        {badge && (
+          <span
+            className={cn(
+              "rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide",
+              badgeAccent === "sage" && "bg-sage/15 text-sage",
+              badgeAccent === "primary" && "bg-primary/15 text-primary",
+              badgeAccent === "muted" && "bg-muted text-muted-foreground",
+            )}
+          >
+            {badge}
+          </span>
+        )}
+      </div>
+      <div className="mt-3 flex gap-4 text-xs">
+        <div>
+          <span className="text-muted-foreground">Performance</span>
+          <p className="font-semibold text-foreground">{performance}</p>
+        </div>
+        <div>
+          <span className="text-muted-foreground">Accuracy</span>
+          <p className="font-semibold text-foreground">{accuracy}</p>
+        </div>
+      </div>
+      <p className="mt-3 text-[13px] leading-relaxed text-muted-foreground">
+        {description}
+      </p>
+      <div className="mt-3 border-t border-border/60 pt-3">
+        <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          Best for
+        </span>
+        <p className="mt-0.5 text-[13px] text-foreground">{bestFor}</p>
+      </div>
+    </div>
   );
 }

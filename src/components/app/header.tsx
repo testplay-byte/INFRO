@@ -36,17 +36,17 @@ export function Header({
   const status = useStore((s) => s.status);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-xl">
-      <div className="mx-auto flex h-18 max-w-[1400px] items-center gap-3 px-4 sm:px-6">
+    <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur-xl">
+      <div className="mx-auto flex h-16 max-w-[1400px] items-center gap-3 px-4 sm:px-6">
         {/* Logo + wordmark */}
         <div className="flex items-center gap-2.5">
           <Logo />
           <div className="leading-tight">
             <div className="flex items-center gap-1.5">
-              <span className="text-lg font-bold tracking-tight">
+              <span className="text-base font-bold tracking-tight">
                 Infro
               </span>
-              <span className="hidden rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold text-primary sm:inline">
+              <span className="hidden rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary sm:inline">
                 intro · outro
               </span>
             </div>
@@ -153,8 +153,8 @@ export function Header({
 
 function Logo() {
   return (
-    <div className="relative grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-primary to-copper shadow-md shadow-primary/20">
-      <Sparkles className="h-5 w-5 text-primary-foreground" />
+    <div className="grid h-9 w-9 place-items-center rounded-lg bg-primary shadow-sm">
+      <Sparkles className="h-4 w-4 text-primary-foreground" />
     </div>
   );
 }

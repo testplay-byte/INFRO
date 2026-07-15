@@ -459,8 +459,8 @@ function overlapFractionA(a: Match, b: Match): number {
 
 /**
  * Targeted scan of the END regions of both videos to catch outros that
- * don't pass the strict threshold. Compares only the last 30 seconds using
- * a relaxed threshold.
+ * don't pass the strict threshold. Uses progressively relaxed settings
+ * and tries BOTH video and audio independently, keeping the best result.
  */
 function targetedEndScan(
   streamsA: FingerprintStream[],
@@ -472,16 +472,26 @@ function targetedEndScan(
   const audioA = streamsA.filter((s) => s.kind.startsWith("audio"));
   const audioB = streamsB.filter((s) => s.kind.startsWith("audio"));
 
-  // Build sub-streams containing only the last 30 seconds
-  const END_WINDOW = 30;
+  // Use a wider window and much more relaxed settings for the outro scan.
+  // Outros often have encoding differences, volume drops, or fade-outs that
+  // reduce similarity below the main threshold.
+  const END_WINDOW = 45;
   const relaxedSettings: AnalysisSettings = {
     ...settings,
-    similarityThreshold: Math.max(0.7, settings.similarityThreshold - 0.1),
-    minMatchDuration: Math.max(3, settings.minMatchDuration / 2),
-    matchDensity: 0.5,
+    similarityThreshold: Math.max(0.6, settings.similarityThreshold - 0.15),
+    minMatchDuration: Math.max(2, settings.minMatchDuration / 3),
+    matchDensity: 0.45,
   };
 
   let bestMatch: Match | null = null;
+  let bestScore = -Infinity;
+
+  const scoreMatch = (m: Match, durA: number, durB: number): number => {
+    const distToEnd = Math.min(durA - m.aEnd, durB - m.bEnd);
+    // Reward confidence + proximity to end + match length
+    const lengthBonus = Math.min(0.3, (m.aEnd - m.aStart) / 30);
+    return m.confidence * (1 / (1 + distToEnd * 0.5)) + lengthBonus;
+  };
 
   // Try video
   if (videoA.length && videoB.length) {
@@ -490,38 +500,30 @@ function targetedEndScan(
     if (subA && subB) {
       const raw = matchByOffsetHistogram(subA, subB, relaxedSettings, "video-outro");
       const matches = dedupeMatches(rawToMatches(raw, subA, subB));
-      if (matches.length > 0) {
-        // Pick the match closest to the end of both videos
-        const scored = matches.map((m) => {
-          const distToEnd = Math.min(
-            videoA[0].sourceDuration - m.aEnd,
-            videoB[0].sourceDuration - m.bEnd,
-          );
-          return { m, score: m.confidence * (1 / (1 + distToEnd)) };
-        });
-        scored.sort((a, b) => b.score - a.score);
-        bestMatch = scored[0].m;
+      for (const m of matches) {
+        const score = scoreMatch(m, videoA[0].sourceDuration, videoB[0].sourceDuration);
+        if (score > bestScore) {
+          bestScore = score;
+          bestMatch = m;
+        }
       }
     }
   }
 
-  // Try audio if video didn't find anything
-  if (!bestMatch && audioA.length && audioB.length) {
+  // Try audio independently — don't skip even if video found something.
+  // Audio often catches outros that video misses (and vice versa).
+  if (audioA.length && audioB.length) {
     const subA = substreamLastN(audioA[0], END_WINDOW);
     const subB = substreamLastN(audioB[0], END_WINDOW);
     if (subA && subB) {
       const raw = matchByOffsetHistogram(subA, subB, relaxedSettings, "audio-outro");
       const matches = dedupeMatches(rawToMatches(raw, subA, subB));
-      if (matches.length > 0) {
-        const scored = matches.map((m) => {
-          const distToEnd = Math.min(
-            audioA[0].sourceDuration - m.aEnd,
-            audioB[0].sourceDuration - m.bEnd,
-          );
-          return { m, score: m.confidence * (1 / (1 + distToEnd)) };
-        });
-        scored.sort((a, b) => b.score - a.score);
-        bestMatch = scored[0].m;
+      for (const m of matches) {
+        const score = scoreMatch(m, audioA[0].sourceDuration, audioB[0].sourceDuration);
+        if (score > bestScore) {
+          bestScore = score;
+          bestMatch = m;
+        }
       }
     }
   }

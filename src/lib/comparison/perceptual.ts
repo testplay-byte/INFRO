@@ -32,22 +32,20 @@ export function grayVariance(
 
 /**
  * Compute a 32-bit difference hash (dHash) from a grayscale grid.
- * Uses the top 4 rows × 8 horizontal comparisons = 32 bits. Regular
- * number arithmetic keeps this fast in the browser (BigInt is ~50× slower
- * for this workload).
  *
- * If the frame has very low variance (uniform/black), returns UNIFORM_FRAME_HASH
- * — a sentinel that never matches, preventing false positives from
- * fade-to-black sections at video endings.
+ * If the frame is truly uniform (solid color / pure black / pure white),
+ * returns UNIFORM_FRAME_HASH — a sentinel that never matches. The
+ * threshold is deliberately low (variance < 10) so that legitimate
+ * fade-in/fade-out frames with partial content are NOT filtered out.
  */
 export function computeDHash(
   gray: Uint8Array,
   width: number,
   height: number,
 ): number {
-  // Detect uniform/black frames — these produce degenerate hashes where
-  // every bit is 0, causing false matches between any two black frames.
-  if (grayVariance(gray) < 25) {
+  // Only filter TRULY uniform frames — not fade-in frames which have
+  // meaningful but low-variance content.
+  if (grayVariance(gray) < 10) {
     return UNIFORM_FRAME_HASH;
   }
 
