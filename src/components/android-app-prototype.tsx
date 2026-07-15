@@ -284,7 +284,7 @@ function HomeScreen({ onCompare, onDetect }: { onCompare: () => void; onDetect: 
   );
 }
 
-/** Rich animated geometric shapes — triangles, rectangles, pentagons, circles */
+/** Rich animated geometric shapes — scattered, organic, not grid-organized */
 function GeometricShapes() {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -300,159 +300,116 @@ function GeometricShapes() {
         className="absolute top-10 left-[-50px] w-44 h-44 rounded-full bg-[#4D7C0F]/8 blur-3xl"
       />
 
-      {/* Triangle — spinning, top right area (larger) */}
+      {/* Triangle — spinning, top right area */}
       <motion.div
         animate={{ rotate: [0, 360] }}
         transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-        className="absolute top-16 right-10"
+        className="absolute top-20 right-12"
       >
-        <svg width="44" height="44" viewBox="0 0 32 32" fill="none">
+        <svg width="40" height="40" viewBox="0 0 32 32" fill="none">
           <path d="M16 4 L28 26 L4 26 Z" fill="#B45309" fillOpacity="0.12" stroke="#B45309" strokeWidth="1.5" />
         </svg>
       </motion.div>
 
-      {/* Rectangle — bouncing, left side (larger) */}
+      {/* Rectangle — bouncing, left side */}
       <motion.div
-        animate={{ y: [0, -14, 0], rotate: [0, -8, 0] }}
+        animate={{ y: [0, -12, 0], rotate: [0, -8, 0] }}
         transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-24 left-8"
+        className="absolute top-28 left-10"
       >
-        <svg width="38" height="38" viewBox="0 0 28 28" fill="none">
+        <svg width="34" height="34" viewBox="0 0 28 28" fill="none">
           <rect x="3" y="3" width="22" height="22" rx="4" fill="#4D7C0F" fillOpacity="0.12" stroke="#4D7C0F" strokeWidth="1.5" />
         </svg>
       </motion.div>
 
-      {/* Pentagon — spinning, center-top area (larger) */}
+      {/* Pentagon — spinning, left area */}
       <motion.div
         animate={{ rotate: [0, -360] }}
         transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-        className="absolute top-10 left-1/2 -translate-x-1/2"
+        className="absolute top-16 left-20"
       >
-        <svg width="40" height="40" viewBox="0 0 30 30" fill="none">
+        <svg width="36" height="36" viewBox="0 0 30 30" fill="none">
           <path d="M15 3 L27 12 L22 27 L8 27 L3 12 Z" fill="#C2410C" fillOpacity="0.12" stroke="#C2410C" strokeWidth="1.5" />
         </svg>
       </motion.div>
 
-      {/* Hexagon — bouncing, right side (larger) */}
+      {/* Hexagon — bouncing, right side */}
       <motion.div
-        animate={{ y: [0, 12, 0], rotate: [0, 15, 0] }}
+        animate={{ y: [0, 10, 0], rotate: [0, 15, 0] }}
         transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-        className="absolute top-32 right-6"
+        className="absolute top-36 right-8"
       >
-        <svg width="36" height="36" viewBox="0 0 26 26" fill="none">
+        <svg width="32" height="32" viewBox="0 0 26 26" fill="none">
           <path d="M13 2 L23 8 L23 18 L13 24 L3 18 L3 8 Z" fill="#B45309" fillOpacity="0.1" stroke="#B45309" strokeWidth="1.5" />
         </svg>
       </motion.div>
 
-      {/* Small circle — pulsing, left-center (larger) */}
+      {/* Circle — pulsing, scattered left */}
       <motion.div
-        animate={{ scale: [1, 1.4, 1], opacity: [0.4, 0.7, 0.4] }}
+        animate={{ scale: [1, 1.3, 1], opacity: [0.4, 0.7, 0.4] }}
         transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-20 left-24 w-4 h-4 rounded-full bg-[#4D7C0F]/40"
+        className="absolute top-24 left-32 w-4 h-4 rounded-full bg-[#4D7C0F]/40"
       />
 
-      {/* Small circle — pulsing, right-center (larger) */}
+      {/* Circle — pulsing, scattered right */}
       <motion.div
-        animate={{ scale: [1, 1.5, 1], opacity: [0.3, 0.6, 0.3] }}
+        animate={{ scale: [1, 1.4, 1], opacity: [0.3, 0.6, 0.3] }}
         transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-        className="absolute top-28 right-20 w-3.5 h-3.5 rounded-full bg-[#B45309]/40"
+        className="absolute top-32 right-24 w-3.5 h-3.5 rounded-full bg-[#B45309]/40"
       />
 
-      {/* Diamond — spinning, lower left (larger) */}
+      {/* Diamond — spinning, lower left */}
       <motion.div
         animate={{ rotate: [0, 360] }}
         transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
-        className="absolute top-40 left-4"
+        className="absolute top-44 left-6"
       >
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
           <path d="M12 2 L22 12 L12 22 L2 12 Z" fill="#C2410C" fillOpacity="0.1" stroke="#C2410C" strokeWidth="1.5" />
         </svg>
       </motion.div>
 
-      {/* Small triangle — bouncing, lower right (larger) */}
+      {/* Small triangle — bouncing, lower right */}
       <motion.div
-        animate={{ y: [0, 10, 0] }}
+        animate={{ y: [0, 8, 0] }}
         transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}
-        className="absolute top-44 right-12"
+        className="absolute top-48 right-16"
       >
-        <svg width="28" height="28" viewBox="0 0 20 20" fill="none">
+        <svg width="26" height="26" viewBox="0 0 20 20" fill="none">
           <path d="M10 2 L18 17 L2 17 Z" fill="#4D7C0F" fillOpacity="0.15" stroke="#4D7C0F" strokeWidth="1.5" />
         </svg>
       </motion.div>
-
-      {/* Animated wavy line — two layers with different speeds */}
-      <div className="absolute top-36 left-1/2 -translate-x-1/2 w-48 h-10">
-        <motion.svg
-          animate={{ x: [0, -20, 0] }}
-          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute inset-0 w-full h-full"
-          viewBox="0 0 160 30"
-          fill="none"
-          preserveAspectRatio="none"
-        >
-          <path d="M0 15 Q20 5 40 15 T80 15 T120 15 T160 15" stroke="#B45309" strokeWidth="2" strokeOpacity="0.35" />
-        </motion.svg>
-        <motion.svg
-          animate={{ x: [0, 20, 0] }}
-          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-          className="absolute inset-0 w-full h-full"
-          viewBox="0 0 160 30"
-          fill="none"
-          preserveAspectRatio="none"
-        >
-          <path d="M0 15 Q20 25 40 15 T80 15 T120 15 T160 15" stroke="#4D7C0F" strokeWidth="1.5" strokeOpacity="0.3" />
-        </motion.svg>
-      </div>
-
-      {/* Center cluster — ring of dots orbiting */}
-      <div className="absolute top-28 left-1/2 -translate-x-1/2 w-20 h-20">
-        <motion.div
-          animate={{ rotate: [0, 360] }}
-          transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-          className="relative w-full h-full"
-        >
-          {[0, 60, 120, 180, 240, 300].map((angle) => (
-            <div
-              key={angle}
-              className="absolute w-1.5 h-1.5 rounded-full bg-[#B45309]/30"
-              style={{
-                top: "50%",
-                left: "50%",
-                transform: `rotate(${angle}deg) translateY(-36px)`,
-              }}
-            />
-          ))}
-        </motion.div>
-      </div>
 
       {/* Center plus sign — pulsing */}
       <motion.div
         animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
         transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-[150px] left-1/2 -translate-x-1/2"
+        className="absolute top-[170px] left-1/2 -translate-x-1/2"
       >
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
           <path d="M8 1 V15 M1 8 H15" stroke="#4D7C0F" strokeWidth="2" strokeLinecap="round" strokeOpacity="0.4" />
         </svg>
       </motion.div>
 
-      {/* Floating squares — scattered */}
+      {/* Floating square — scattered, center-left */}
       <motion.div
         animate={{ y: [0, -8, 0], opacity: [0.2, 0.4, 0.2] }}
         transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
-        className="absolute top-52 left-20 w-3 h-3 rounded-sm bg-[#C2410C]/30 rotate-12"
+        className="absolute top-[190px] left-16 w-3 h-3 rounded-sm bg-[#C2410C]/30 rotate-12"
       />
+
+      {/* Ring outline — floating, center-right */}
       <motion.div
         animate={{ y: [0, 10, 0], opacity: [0.15, 0.35, 0.15] }}
         transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut", delay: 2.5 }}
-        className="absolute top-56 right-24 w-2.5 h-2.5 rounded-full border border-[#4D7C0F]/40"
+        className="absolute top-[180px] right-20 w-3 h-3 rounded-full border border-[#4D7C0F]/40"
       />
 
       {/* Dotted line decoration — top left */}
       <motion.div
         animate={{ opacity: [0.15, 0.35, 0.15] }}
         transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-        className="absolute top-6 left-6 flex gap-1.5"
+        className="absolute top-8 left-8 flex gap-1.5"
       >
         {[...Array(5)].map((_, i) => (
           <div key={i} className="w-1 h-1 rounded-full bg-[#B45309]/40" />
@@ -463,7 +420,7 @@ function GeometricShapes() {
       <motion.div
         animate={{ opacity: [0.15, 0.35, 0.15] }}
         transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 3 }}
-        className="absolute top-6 right-6 flex gap-1.5"
+        className="absolute top-8 right-8 flex gap-1.5"
       >
         {[...Array(4)].map((_, i) => (
           <div key={i} className="w-1 h-1 rounded-full bg-[#4D7C0F]/40" />
@@ -481,17 +438,46 @@ function GeometricShapes() {
         </svg>
       </motion.div>
 
-      {/* Tiny circles scattered */}
+      {/* Small square — drifting, center */}
+      <motion.div
+        animate={{ y: [0, -6, 0], rotate: [0, 20, 0], opacity: [0.2, 0.4, 0.2] }}
+        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.7 }}
+        className="absolute top-[155px] left-[40%] w-2.5 h-2.5 rounded-sm bg-[#B45309]/30 rotate-45"
+      />
+
+      {/* Tiny circle — pulsing, scattered */}
       <motion.div
         animate={{ scale: [1, 1.5, 1], opacity: [0.2, 0.4, 0.2] }}
         transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}
-        className="absolute top-48 left-32 w-1.5 h-1.5 rounded-full bg-[#B45309]/50"
+        className="absolute top-[140px] left-[55%] w-1.5 h-1.5 rounded-full bg-[#B45309]/50"
       />
       <motion.div
         animate={{ scale: [1, 1.3, 1], opacity: [0.15, 0.35, 0.15] }}
         transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1.8 }}
         className="absolute bottom-40 left-24 w-2 h-2 rounded-full bg-[#4D7C0F]/40"
       />
+
+      {/* Small diamond — drifting, center-right */}
+      <motion.div
+        animate={{ y: [0, 7, 0], opacity: [0.2, 0.4, 0.2] }}
+        transition={{ duration: 4.2, repeat: Infinity, ease: "easeInOut", delay: 1.2 }}
+        className="absolute top-[200px] right-[30%]"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <path d="M12 2 L22 12 L12 22 L2 12 Z" fill="#C2410C" fillOpacity="0.15" stroke="#C2410C" strokeWidth="1.5" />
+        </svg>
+      </motion.div>
+
+      {/* Outline triangle — drifting, center-left */}
+      <motion.div
+        animate={{ y: [0, -9, 0], opacity: [0.15, 0.35, 0.15] }}
+        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 2.2 }}
+        className="absolute top-[130px] left-[25%]"
+      >
+        <svg width="20" height="20" viewBox="0 0 32 32" fill="none">
+          <path d="M16 4 L28 26 L4 26 Z" fill="none" stroke="#4D7C0F" strokeWidth="1.5" strokeOpacity="0.5" />
+        </svg>
+      </motion.div>
     </div>
   );
 }
