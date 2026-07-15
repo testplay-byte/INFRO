@@ -194,16 +194,16 @@ export function AndroidAppPrototype() {
 
 function HomeScreen({ onCompare, onDetect }: { onCompare: () => void; onDetect: () => void; }) {
   return (
-    <div className="relative flex flex-col min-h-[calc(800px-36px)] px-6 pt-6 pb-8 overflow-hidden">
+    <div className="relative flex flex-col min-h-[calc(800px-36px)] px-6 pb-8 overflow-hidden">
       {/* Animated geometric shapes filling the top area */}
       <GeometricShapes />
 
-      {/* Logo — top center */}
+      {/* Logo — top center, pushed down to avoid shapes */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="relative flex items-center justify-center gap-2.5 mt-2 z-10"
+        className="relative flex items-center justify-center gap-2.5 mt-10 z-10"
       >
         <div className="w-9 h-9 rounded-xl bg-[#B45309] flex items-center justify-center shadow-sm">
           <span className="text-white font-bold text-base">I</span>
@@ -292,115 +292,206 @@ function GeometricShapes() {
       <motion.div
         animate={{ x: [0, 20, 0], y: [0, -15, 0] }}
         transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-0 right-[-60px] w-44 h-44 rounded-full bg-[#B45309]/8 blur-3xl"
+        className="absolute top-0 right-[-60px] w-52 h-52 rounded-full bg-[#B45309]/8 blur-3xl"
       />
       <motion.div
         animate={{ x: [0, -15, 0], y: [0, 20, 0] }}
         transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-10 left-[-50px] w-36 h-36 rounded-full bg-[#4D7C0F]/8 blur-3xl"
+        className="absolute top-10 left-[-50px] w-44 h-44 rounded-full bg-[#4D7C0F]/8 blur-3xl"
       />
 
-      {/* Triangle — spinning, top right area */}
+      {/* Triangle — spinning, top right area (larger) */}
       <motion.div
         animate={{ rotate: [0, 360] }}
         transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-        className="absolute top-16 right-12"
+        className="absolute top-16 right-10"
       >
-        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+        <svg width="44" height="44" viewBox="0 0 32 32" fill="none">
           <path d="M16 4 L28 26 L4 26 Z" fill="#B45309" fillOpacity="0.12" stroke="#B45309" strokeWidth="1.5" />
         </svg>
       </motion.div>
 
-      {/* Rectangle — bouncing, left side */}
+      {/* Rectangle — bouncing, left side (larger) */}
       <motion.div
-        animate={{ y: [0, -12, 0], rotate: [0, -8, 0] }}
+        animate={{ y: [0, -14, 0], rotate: [0, -8, 0] }}
         transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-24 left-10"
+        className="absolute top-24 left-8"
       >
-        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+        <svg width="38" height="38" viewBox="0 0 28 28" fill="none">
           <rect x="3" y="3" width="22" height="22" rx="4" fill="#4D7C0F" fillOpacity="0.12" stroke="#4D7C0F" strokeWidth="1.5" />
         </svg>
       </motion.div>
 
-      {/* Pentagon — spinning, center-top area */}
+      {/* Pentagon — spinning, center-top area (larger) */}
       <motion.div
         animate={{ rotate: [0, -360] }}
         transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-        className="absolute top-12 left-1/2 -translate-x-1/2"
+        className="absolute top-10 left-1/2 -translate-x-1/2"
       >
-        <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
+        <svg width="40" height="40" viewBox="0 0 30 30" fill="none">
           <path d="M15 3 L27 12 L22 27 L8 27 L3 12 Z" fill="#C2410C" fillOpacity="0.12" stroke="#C2410C" strokeWidth="1.5" />
         </svg>
       </motion.div>
 
-      {/* Hexagon — bouncing, right side */}
+      {/* Hexagon — bouncing, right side (larger) */}
       <motion.div
-        animate={{ y: [0, 10, 0], rotate: [0, 15, 0] }}
+        animate={{ y: [0, 12, 0], rotate: [0, 15, 0] }}
         transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-        className="absolute top-32 right-8"
+        className="absolute top-32 right-6"
       >
-        <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+        <svg width="36" height="36" viewBox="0 0 26 26" fill="none">
           <path d="M13 2 L23 8 L23 18 L13 24 L3 18 L3 8 Z" fill="#B45309" fillOpacity="0.1" stroke="#B45309" strokeWidth="1.5" />
         </svg>
       </motion.div>
 
-      {/* Small circle — pulsing, left-center */}
+      {/* Small circle — pulsing, left-center (larger) */}
       <motion.div
-        animate={{ scale: [1, 1.3, 1], opacity: [0.4, 0.7, 0.4] }}
+        animate={{ scale: [1, 1.4, 1], opacity: [0.4, 0.7, 0.4] }}
         transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-20 left-24 w-3 h-3 rounded-full bg-[#4D7C0F]/40"
+        className="absolute top-20 left-24 w-4 h-4 rounded-full bg-[#4D7C0F]/40"
       />
 
-      {/* Small circle — pulsing, right-center */}
+      {/* Small circle — pulsing, right-center (larger) */}
       <motion.div
-        animate={{ scale: [1, 1.4, 1], opacity: [0.3, 0.6, 0.3] }}
+        animate={{ scale: [1, 1.5, 1], opacity: [0.3, 0.6, 0.3] }}
         transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-        className="absolute top-28 right-20 w-2.5 h-2.5 rounded-full bg-[#B45309]/40"
+        className="absolute top-28 right-20 w-3.5 h-3.5 rounded-full bg-[#B45309]/40"
       />
 
-      {/* Diamond — spinning, lower left */}
+      {/* Diamond — spinning, lower left (larger) */}
       <motion.div
         animate={{ rotate: [0, 360] }}
         transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
-        className="absolute top-40 left-6"
+        className="absolute top-40 left-4"
       >
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
           <path d="M12 2 L22 12 L12 22 L2 12 Z" fill="#C2410C" fillOpacity="0.1" stroke="#C2410C" strokeWidth="1.5" />
         </svg>
       </motion.div>
 
-      {/* Small triangle — bouncing, lower right */}
+      {/* Small triangle — bouncing, lower right (larger) */}
       <motion.div
-        animate={{ y: [0, 8, 0] }}
+        animate={{ y: [0, 10, 0] }}
         transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}
-        className="absolute top-44 right-14"
+        className="absolute top-44 right-12"
       >
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <svg width="28" height="28" viewBox="0 0 20 20" fill="none">
           <path d="M10 2 L18 17 L2 17 Z" fill="#4D7C0F" fillOpacity="0.15" stroke="#4D7C0F" strokeWidth="1.5" />
         </svg>
       </motion.div>
 
-      {/* Wavy line decoration */}
-      <motion.svg
-        animate={{ opacity: [0.2, 0.4, 0.2] }}
-        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-36 left-1/2 -translate-x-1/2 w-40 h-8"
-        viewBox="0 0 160 30"
-        fill="none"
-      >
-        <path d="M0 15 Q20 5 40 15 T80 15 T120 15 T160 15" stroke="#B45309" strokeWidth="1.5" strokeOpacity="0.3" />
-      </motion.svg>
+      {/* Animated wavy line — two layers with different speeds */}
+      <div className="absolute top-36 left-1/2 -translate-x-1/2 w-48 h-10">
+        <motion.svg
+          animate={{ x: [0, -20, 0] }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute inset-0 w-full h-full"
+          viewBox="0 0 160 30"
+          fill="none"
+          preserveAspectRatio="none"
+        >
+          <path d="M0 15 Q20 5 40 15 T80 15 T120 15 T160 15" stroke="#B45309" strokeWidth="2" strokeOpacity="0.35" />
+        </motion.svg>
+        <motion.svg
+          animate={{ x: [0, 20, 0] }}
+          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+          className="absolute inset-0 w-full h-full"
+          viewBox="0 0 160 30"
+          fill="none"
+          preserveAspectRatio="none"
+        >
+          <path d="M0 15 Q20 25 40 15 T80 15 T120 15 T160 15" stroke="#4D7C0F" strokeWidth="1.5" strokeOpacity="0.3" />
+        </motion.svg>
+      </div>
 
-      {/* Dotted line decoration */}
+      {/* Center cluster — ring of dots orbiting */}
+      <div className="absolute top-28 left-1/2 -translate-x-1/2 w-20 h-20">
+        <motion.div
+          animate={{ rotate: [0, 360] }}
+          transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+          className="relative w-full h-full"
+        >
+          {[0, 60, 120, 180, 240, 300].map((angle) => (
+            <div
+              key={angle}
+              className="absolute w-1.5 h-1.5 rounded-full bg-[#B45309]/30"
+              style={{
+                top: "50%",
+                left: "50%",
+                transform: `rotate(${angle}deg) translateY(-36px)`,
+              }}
+            />
+          ))}
+        </motion.div>
+      </div>
+
+      {/* Center plus sign — pulsing */}
+      <motion.div
+        animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
+        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute top-[150px] left-1/2 -translate-x-1/2"
+      >
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M8 1 V15 M1 8 H15" stroke="#4D7C0F" strokeWidth="2" strokeLinecap="round" strokeOpacity="0.4" />
+        </svg>
+      </motion.div>
+
+      {/* Floating squares — scattered */}
+      <motion.div
+        animate={{ y: [0, -8, 0], opacity: [0.2, 0.4, 0.2] }}
+        transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
+        className="absolute top-52 left-20 w-3 h-3 rounded-sm bg-[#C2410C]/30 rotate-12"
+      />
+      <motion.div
+        animate={{ y: [0, 10, 0], opacity: [0.15, 0.35, 0.15] }}
+        transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut", delay: 2.5 }}
+        className="absolute top-56 right-24 w-2.5 h-2.5 rounded-full border border-[#4D7C0F]/40"
+      />
+
+      {/* Dotted line decoration — top left */}
       <motion.div
         animate={{ opacity: [0.15, 0.35, 0.15] }}
         transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-        className="absolute top-8 left-6 flex gap-1.5"
+        className="absolute top-6 left-6 flex gap-1.5"
       >
         {[...Array(5)].map((_, i) => (
           <div key={i} className="w-1 h-1 rounded-full bg-[#B45309]/40" />
         ))}
       </motion.div>
+
+      {/* Dotted line decoration — top right */}
+      <motion.div
+        animate={{ opacity: [0.15, 0.35, 0.15] }}
+        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 3 }}
+        className="absolute top-6 right-6 flex gap-1.5"
+      >
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="w-1 h-1 rounded-full bg-[#4D7C0F]/40" />
+        ))}
+      </motion.div>
+
+      {/* Cross/plus decoration — bottom right */}
+      <motion.div
+        animate={{ rotate: [0, 90, 0] }}
+        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute bottom-32 right-16"
+      >
+        <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+          <path d="M8 1 V15 M1 8 H15" stroke="#B45309" strokeWidth="1.5" strokeLinecap="round" strokeOpacity="0.3" />
+        </svg>
+      </motion.div>
+
+      {/* Tiny circles scattered */}
+      <motion.div
+        animate={{ scale: [1, 1.5, 1], opacity: [0.2, 0.4, 0.2] }}
+        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}
+        className="absolute top-48 left-32 w-1.5 h-1.5 rounded-full bg-[#B45309]/50"
+      />
+      <motion.div
+        animate={{ scale: [1, 1.3, 1], opacity: [0.15, 0.35, 0.15] }}
+        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1.8 }}
+        className="absolute bottom-40 left-24 w-2 h-2 rounded-full bg-[#4D7C0F]/40"
+      />
     </div>
   );
 }
@@ -426,18 +517,37 @@ function CompareSetupScreen({
   return (
     <div className="flex flex-col min-h-[calc(800px-36px)] px-6 pt-6 pb-8">
       {/* Top bar */}
-      <div className="flex items-center justify-between mb-6">
-        <button onClick={onBack} className="w-9 h-9 -ml-1.5 rounded-full flex items-center justify-center active:bg-neutral-100">
-          <ArrowLeft className="w-5 h-5" />
-        </button>
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="flex items-center justify-between mb-6"
+      >
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          onClick={onBack}
+          className="h-9 px-3 rounded-xl bg-[#F5F5F0] flex items-center gap-1.5 text-[12px] font-bold text-[#1C1917]"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          Back
+        </motion.button>
         <h1 className="text-[17px] font-bold">Compare Videos</h1>
-        <button onClick={onOpenSettings} className="w-9 h-9 -mr-1.5 rounded-full flex items-center justify-center active:bg-neutral-100">
+        <motion.button
+          whileTap={{ scale: 0.9, rotate: 90 }}
+          onClick={onOpenSettings}
+          className="w-9 h-9 -mr-1.5 rounded-full flex items-center justify-center active:bg-neutral-100"
+        >
           <Settings className="w-[18px] h-[18px]" />
-        </button>
-      </div>
+        </motion.button>
+      </motion.div>
 
       {/* Mode selector — segmented control */}
-      <div className="bg-[#F5F5F0] rounded-xl p-1 flex gap-1 mb-3">
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.1 }}
+        className="bg-[#F5F5F0] rounded-xl p-1 flex gap-1 mb-3"
+      >
         {(["audio", "video", "combined"] as Mode[]).map((m) => (
           <button
             key={m}
@@ -457,13 +567,19 @@ function CompareSetupScreen({
             <span className="relative z-10">{m}</span>
           </button>
         ))}
-      </div>
+      </motion.div>
 
       {/* Mode description — one line, vector icon, no emoji */}
-      <div className="flex items-center gap-2 bg-[#B45309]/5 border border-[#B45309]/15 rounded-xl px-3 py-2.5 mb-6">
+      <motion.div
+        key={mode}
+        initial={{ opacity: 0, x: -10 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.25 }}
+        className="flex items-center gap-2 bg-[#B45309]/5 border border-[#B45309]/15 rounded-xl px-3 py-2.5 mb-6"
+      >
         <span className="text-[#B45309] shrink-0">{modeInfo[mode].icon}</span>
         <p className="text-[12px] text-[#78716C] leading-tight">{modeInfo[mode].desc}</p>
-      </div>
+      </motion.div>
 
       {/* Video pickers */}
       <VideoPicker label="Video A" selected={hasVideoA} onSelect={() => setHasVideoA(true)} fileName="episode_01.mp4" duration="24:30" />
@@ -492,7 +608,12 @@ function VideoPicker({
   label: string; selected: boolean; onSelect: () => void; fileName: string; duration: string;
 }) {
   return (
-    <div className="mb-4">
+    <motion.div
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: label.includes("B") ? 0.25 : 0.2 }}
+      className="mb-4"
+    >
       <p className="text-[11px] font-bold text-[#78716C] tracking-wider mb-2">{label.toUpperCase()}</p>
       <motion.button
         whileTap={{ scale: 0.99 }}
@@ -502,9 +623,13 @@ function VideoPicker({
           selected ? "border-[#4D7C0F]/40 bg-[#4D7C0F]/5" : "border-[#E7E5E4] bg-white",
         )}
       >
-        <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center shrink-0", selected ? "bg-[#4D7C0F]/15" : "bg-[#F5F5F0]")}>
+        <motion.div
+          animate={selected ? { scale: [1, 1.2, 1] } : {}}
+          transition={{ duration: 0.3 }}
+          className={cn("w-10 h-10 rounded-lg flex items-center justify-center shrink-0", selected ? "bg-[#4D7C0F]/15" : "bg-[#F5F5F0]")}
+        >
           {selected ? <Check className="w-5 h-5 text-[#4D7C0F]" /> : <Upload className="w-4 h-4 text-[#78716C]" />}
-        </div>
+        </motion.div>
         <div className="flex-1 text-left min-w-0">
           {selected ? (
             <>
@@ -519,7 +644,7 @@ function VideoPicker({
           )}
         </div>
       </motion.button>
-    </div>
+    </motion.div>
   );
 }
 
@@ -603,7 +728,12 @@ function DetectSetupScreen({
   const canDetect = hasSignature && hasDetectVideo;
   return (
     <div className="flex flex-col min-h-[calc(800px-36px)] px-6 pt-6 pb-8">
-      <div className="flex items-center justify-between mb-6">
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="flex items-center justify-between mb-6"
+      >
         <motion.button
           whileTap={{ scale: 0.95 }}
           onClick={onBack}
@@ -613,13 +743,22 @@ function DetectSetupScreen({
           Back
         </motion.button>
         <h1 className="text-[17px] font-bold">Detect</h1>
-        <button onClick={onOpenSettings} className="w-9 h-9 -mr-1.5 rounded-full flex items-center justify-center active:bg-neutral-100">
+        <motion.button
+          whileTap={{ scale: 0.9, rotate: 90 }}
+          onClick={onOpenSettings}
+          className="w-9 h-9 -mr-1.5 rounded-full flex items-center justify-center active:bg-neutral-100"
+        >
           <Settings className="w-[18px] h-[18px]" />
-        </button>
-      </div>
-      <p className="text-[14px] text-[#78716C] leading-relaxed mb-6">
+        </motion.button>
+      </motion.div>
+      <motion.p
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.1 }}
+        className="text-[14px] text-[#78716C] leading-relaxed mb-6"
+      >
         Select a signature JSON and a video. Infro will detect where the intro and outro appear.
-      </p>
+      </motion.p>
       {/* Signature picker */}
       <div className="mb-4">
         <p className="text-[11px] font-bold text-[#78716C] tracking-wider mb-2">SIGNATURE FILE</p>
@@ -1296,6 +1435,9 @@ function DetectResultsScreen({
           {detections.map((d, i) => (
             <motion.button
               key={i}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.2 + i * 0.1 }}
               whileTap={{ scale: 0.97 }}
               onClick={() => seekTo(d.start)}
               className="bg-white border border-[#E7E5E4] rounded-xl p-3 text-left"
