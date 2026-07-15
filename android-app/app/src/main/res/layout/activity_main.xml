@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp">
+
+            <!-- Header -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="24dp">
+
+                <View
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/logo_bg"
+                    android:layout_marginEnd="12dp" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Infro"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_primary" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Intro &amp; Outro Detector"
+                        android:textSize="12sp"
+                        android:textColor="@color/text_secondary" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Title -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Detect intro &amp; outro"
+                android:textSize="28sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Upload a signature JSON and a video. Infro will detect where the intro and outro appear using audio fingerprint matching."
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"
+                android:lineSpacingExtra="4dp"
+                android:layout_marginBottom="32dp" />
+
+            <!-- Signature upload -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="1. SIGNATURE FILE"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_secondary"
+                android:layout_marginBottom="8dp" />
+
+            <Button
+                android:id="@+id/btnSignature"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:text="Select signature JSON"
+                android:backgroundTint="@color/card"
+                android:textColor="@color/text_primary"
+                android:strokeColor="@color/border"
+                android:strokeWidth="1dp"
+                android:layout_marginBottom="24dp" />
+
+            <TextView
+                android:id="@+id/tvSignatureInfo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="13sp"
+                android:textColor="@color/sage"
+                android:layout_marginBottom="24dp"
+                android:visibility="gone" />
+
+            <!-- Video upload -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="2. VIDEO FILE"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_secondary"
+                android:layout_marginBottom="8dp" />
+
+            <Button
+                android:id="@+id/btnVideo"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:text="Select video"
+                android:backgroundTint="@color/card"
+                android:textColor="@color/text_primary"
+                android:strokeColor="@color/border"
+                android:strokeWidth="1dp"
+                android:layout_marginBottom="24dp" />
+
+            <TextView
+                android:id="@+id/tvVideoInfo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="13sp"
+                android:textColor="@color/sage"
+                android:layout_marginBottom="24dp"
+                android:visibility="gone" />
+
+            <!-- Detect button -->
+            <Button
+                android:id="@+id/btnDetect"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:text="Detect Intro &amp; Outro"
+                android:backgroundTint="@color/primary"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:enabled="false"
+                android:layout_marginBottom="24dp" />
+
+            <!-- Progress -->
+            <ProgressBar
+                android:id="@+id/progressBar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                android:layout_marginBottom="16dp" />
+
+            <TextView
+                android:id="@+id/tvProgress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="13sp"
+                android:textColor="@color/text_secondary"
+                android:gravity="center"
+                android:layout_marginBottom="24dp"
+                android:visibility="gone" />
+
+            <!-- Results -->
+            <LinearLayout
+                android:id="@+id/resultsContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone" />
+
+        </LinearLayout>
+    </ScrollView>
+</androidx.constraintlayout.widget.ConstraintLayout>

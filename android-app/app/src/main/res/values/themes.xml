@@ -1,0 +1,8 @@
+<resources>
+    <style name="Theme.Infro" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">#B45309</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorPrimaryContainer">#FDE68A</item>
+        <item name="android:statusBarColor">#B45309</item>
+    </style>
+</resources>
