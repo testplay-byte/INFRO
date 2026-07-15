@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ShieldCheck, Play, ArrowRight, Zap, Lock, Cpu } from "lucide-react";
+import { ShieldCheck, Play, ArrowRight, Zap, Lock, Cpu, AlertTriangle, RotateCcw } from "lucide-react";
 import { Header } from "@/components/app/header";
 import { UploadCard } from "@/components/app/upload-card";
 import { ProgressPanel } from "@/components/app/progress-panel";
@@ -16,9 +16,11 @@ export default function Home() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const status = useStore((s) => s.status);
   const result = useStore((s) => s.result);
+  const error = useStore((s) => s.error);
   const canStart = useStore((s) => s.canStart());
   const slotA = useStore((s) => s.slotA);
   const slotB = useStore((s) => s.slotB);
+  const setStatus = useStore((s) => s.setStatus);
   const { run } = useComparison();
 
   return (
@@ -31,6 +33,15 @@ export default function Home() {
           <ProgressPanel />
         ) : status === "done" && result ? (
           <ResultsView />
+        ) : status === "error" ? (
+          <ErrorView
+            message={error ?? "An unknown error occurred."}
+            onRetry={() => {
+              setStatus("idle");
+              run();
+            }}
+            onDismiss={() => setStatus("idle")}
+          />
         ) : (
           <IdleView
             canStart={canStart}
@@ -42,6 +53,41 @@ export default function Home() {
       </main>
 
       <Footer />
+    </div>
+  );
+}
+
+function ErrorView({
+  message,
+  onRetry,
+  onDismiss,
+}: {
+  message: string;
+  onRetry: () => void;
+  onDismiss: () => void;
+}) {
+  return (
+    <div className="mx-auto flex max-w-lg flex-col items-center gap-4 py-16 text-center">
+      <div className="grid h-14 w-14 place-items-center rounded-full bg-destructive/10 text-destructive">
+        <AlertTriangle className="h-7 w-7" />
+      </div>
+      <div>
+        <h2 className="text-lg font-semibold">Analysis failed</h2>
+        <p className="mt-1.5 text-sm text-muted-foreground">{message}</p>
+      </div>
+      <div className="flex gap-2">
+        <Button variant="outline" onClick={onDismiss} className="gap-1.5">
+          Back
+        </Button>
+        <Button onClick={onRetry} className="gap-1.5">
+          <RotateCcw className="h-4 w-4" />
+          Try again
+        </Button>
+      </div>
+      <p className="mt-2 max-w-sm text-xs text-muted-foreground/70">
+        Tip: for large files, try the &quot;fast&quot; precision preset in
+        Settings, or use Audio-only / Video-only mode to reduce memory usage.
+      </p>
     </div>
   );
 }

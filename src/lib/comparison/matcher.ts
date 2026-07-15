@@ -119,6 +119,12 @@ export function matchStream(
   let diagonalDone = 0;
   let lastReport = 0;
 
+  // Reusable scratch buffers — avoids allocating per-diagonal (which causes
+  // severe GC pressure when there are thousands of diagonals).
+  const maxLen = Math.min(N, M);
+  const simsBuf = new Float32Array(maxLen);
+  const flagsBuf = new Uint8Array(maxLen);
+
   for (let d = -(N - 1); d <= M - 1; d++) {
     if (onProgress && d - lastReport >= 25) {
       lastReport = d;
@@ -130,13 +136,16 @@ export function matchStream(
     if (iEnd - iStart + 1 < minFrames) continue;
 
     const len = iEnd - iStart + 1;
-    const sims = new Float32Array(len);
+    // Reuse scratch buffers (subarray views, no allocation)
+    const sims = simsBuf.subarray(0, len);
+    const flags = flagsBuf.subarray(0, len);
+
     for (let k = 0; k < len; k++) {
       sims[k] = pairSimilarity(a, iStart + k, b, iStart + k + d);
+      flags[k] = 0; // reset flags
     }
 
     // Density-based in-match flags via a trailing window.
-    const flags = new Uint8Array(len);
     let lo = 0;
     let hit = 0;
     for (let hi = 0; hi < len; hi++) {
@@ -147,11 +156,9 @@ export function matchStream(
       }
       if (hi - lo + 1 === windowFrames) {
         if (hit / windowFrames >= settings.matchDensity) {
-          // mark the whole window center region as in-match
           flags[hi] = 1;
         }
       } else if (hi - lo + 1 < windowFrames && hi === len - 1) {
-        // tail shorter than window: accept if all-high
         if (hit / (hi - lo + 1) >= settings.matchDensity) {
           flags[hi] = 1;
         }
@@ -173,7 +180,6 @@ export function matchStream(
           runEnd = m;
           m++;
         } else {
-          // look ahead within gap tolerance
           let gap = 0;
           let p = m;
           while (p < len && !flags[p] && gap < gapFrames) {

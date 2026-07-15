@@ -14,7 +14,7 @@
 import { computeDHash, colorHistogram } from "@/lib/comparison/perceptual";
 import {
   resampleLinear,
-  chromaSequence,
+  chromaSequenceStreaming,
 } from "@/lib/comparison/audio";
 import {
   runMatching,
@@ -138,26 +138,54 @@ function buildVideoStreams(pack: FramePack, duration: number): FingerprintStream
   return [dhashStream, colorStream];
 }
 
+/** Hard cap on audio chroma frames — longer audio is decimated. */
+const MAX_AUDIO_FRAMES = 2000;
+
 /** Build the audio chroma fingerprint stream from mono PCM. */
 function buildAudioStream(
   pack: AudioPack,
   settings: AnalysisSettings,
 ): FingerprintStream | null {
   if (!pack || pack.pcm.length < 256) return null;
+  // The PCM already arrives at the target rate from the low-sample-rate
+  // AudioContext, but resample defensively if rates differ.
   const targetRate = settings.audioSampleRate;
-  const pcm = resampleLinear(pack.pcm, pack.sampleRate, targetRate);
+  const pcm =
+    pack.sampleRate === targetRate
+      ? pack.pcm
+      : resampleLinear(pack.pcm, pack.sampleRate, targetRate);
+
   const preset = PRECISION_PRESETS[settings.precision];
   const fftSize = preset.fftSize;
   const hopSamples = Math.max(1, Math.round(preset.audioHop * targetRate));
-  const chroma = chromaSequence(pcm, { fftSize, hop: hopSamples, sampleRate: targetRate });
+
+  // If the audio would produce too many frames, increase the hop so we stay
+  // within the cap — this keeps matching fast and memory bounded.
+  const estimatedFrames = Math.max(
+    0,
+    Math.floor((pcm.length - fftSize) / hopSamples) + 1,
+  );
+  const effectiveHop =
+    estimatedFrames > MAX_AUDIO_FRAMES
+      ? Math.max(hopSamples, Math.ceil((pcm.length - fftSize) / MAX_AUDIO_FRAMES))
+      : hopSamples;
+
+  // Streaming chroma: no full spectrogram materialised in memory.
+  const chroma = chromaSequenceStreaming(pcm, {
+    fftSize,
+    hop: effectiveHop,
+    sampleRate: targetRate,
+  });
   if (chroma.length === 0) return null;
+
+  const effectiveHopSec = effectiveHop / targetRate;
   const times = new Float32Array(chroma.length);
   for (let i = 0; i < chroma.length; i++) {
-    times[i] = (i * hopSamples) / targetRate;
+    times[i] = i * effectiveHopSec;
   }
   return {
     kind: "audio-chroma",
-    hop: preset.audioHop,
+    hop: effectiveHopSec,
     times,
     vectors: chroma,
     hashes: null,
@@ -201,13 +229,21 @@ ctx.onmessage = (e: MessageEvent<AnalyzeRequest>) => {
 
     report("comparing", "Comparing fingerprints", 0.1, "scanning alignments");
 
-    const streamDescA = streamsA.map((s) => `${s.kind}(${streamLength(s)})`).join(", ");
-    const streamDescB = streamsB.map((s) => `${s.kind}(${streamLength(s)})`).join(", ");
+    // Guard: if the combined stream sizes are enormous, warn but proceed —
+    // the per-stream caps should already keep things bounded.
+    const totalFramesA = streamsA.reduce((s, st) => s + streamLength(st), 0);
+    const totalFramesB = streamsB.reduce((s, st) => s + streamLength(st), 0);
+    if (totalFramesA * totalFramesB > 25_000_000) {
+      report("comparing", "Comparing fingerprints", 0.12, "large input — may take a moment");
+    }
+
     const { matches, groupCount } = runMatching(streamsA, streamsB, settings, (p, detail) => {
       report("comparing", "Comparing fingerprints", 0.1 + 0.85 * p, detail);
     });
-    void streamDescA;
-    void streamDescB;
+
+    // Release stream data before building the result to reduce peak memory.
+    streamsA.length = 0;
+    streamsB.length = 0;
 
     report("building-timeline", "Building timeline", 0.4, `${matches.length} regions`);
     const introOutro = inferIntroOutro(matches, metaA.duration, metaB.duration);
@@ -258,7 +294,10 @@ ctx.onmessage = (e: MessageEvent<AnalyzeRequest>) => {
   } catch (err) {
     post({
       type: "error",
-      message: err instanceof Error ? err.message : String(err),
+      message:
+        err instanceof Error
+          ? err.message
+          : "Analysis failed — the files may be too large for in-browser processing.",
     });
   }
 };

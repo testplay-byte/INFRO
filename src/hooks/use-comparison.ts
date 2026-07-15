@@ -171,22 +171,61 @@ export function useComparison() {
       workerRef.current = worker;
 
       const result = await new Promise<ComparisonResult>((resolve, reject) => {
+        // Timeout guard — if the worker is unresponsive for 90s, abort.
+        const timeoutId = setTimeout(() => {
+          reject(
+            new Error(
+              "Analysis timed out. The files may be too large or complex. Try shorter clips or the 'fast' precision preset.",
+            ),
+          );
+        }, 90000);
+
         const onMsg = (e: MessageEvent<WorkerOut>) => {
           const msg = e.data;
           if (msg.type === "progress") {
+            // Reset the timeout on each progress tick — the worker is alive.
+            clearTimeout(timeoutId);
+            setTimeout(() => {
+              // re-arm if still pending
+            }, 0);
             const sp = msg.data as StageProgress;
-            // map worker-stage progress into a reasonable overall range
             useStore.getState().updateStage(sp);
+            // Re-arm a shorter inactivity timeout (15s without progress)
+            clearTimeout(timeoutId);
+            const inactivityId = setTimeout(() => {
+              reject(
+                new Error(
+                  "Analysis stalled — the worker stopped responding. Try shorter clips or a different precision setting.",
+                ),
+              );
+            }, 30000);
+            // Store for cleanup
+            (onMsg as unknown as { _inactivityId?: number })._inactivityId =
+              inactivityId;
           } else if (msg.type === "result") {
+            clearTimeout(timeoutId);
+            const fn = onMsg as unknown as { _inactivityId?: number };
+            if (fn._inactivityId) clearTimeout(fn._inactivityId);
             worker.removeEventListener("message", onMsg);
             resolve(msg.data);
           } else if (msg.type === "error") {
+            clearTimeout(timeoutId);
+            const fn = onMsg as unknown as { _inactivityId?: number };
+            if (fn._inactivityId) clearTimeout(fn._inactivityId);
             worker.removeEventListener("message", onMsg);
             reject(new Error(msg.message));
           }
         };
         worker.addEventListener("message", onMsg);
-        worker.addEventListener("error", (err) => reject(err));
+        worker.addEventListener("error", (err) => {
+          clearTimeout(timeoutId);
+          reject(
+            new Error(
+              err.message ||
+                "The analysis worker crashed. This is often an out-of-memory error — try shorter clips.",
+            ),
+          );
+        });
 
         const req: AnalyzeRequest = {
           type: "analyze",
@@ -198,7 +237,13 @@ export function useComparison() {
           metaB: metaB!,
           settings,
         };
-        worker.postMessage(req);
+        // Transfer underlying ArrayBuffers to avoid cloning large payloads.
+        const transferList: Transferable[] = [];
+        if (framesA?.pixels?.buffer) transferList.push(framesA.pixels.buffer);
+        if (framesB?.pixels?.buffer) transferList.push(framesB.pixels.buffer);
+        if (audioA?.pcm?.buffer) transferList.push(audioA.pcm.buffer);
+        if (audioB?.pcm?.buffer) transferList.push(audioB.pcm.buffer);
+        worker.postMessage(req, transferList);
       });
 
       terminateWorker();

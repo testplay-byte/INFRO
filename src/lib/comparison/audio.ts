@@ -242,6 +242,54 @@ export function chromaSequence(
   return mag.map((frame) => chromaFromSpectrum(frame, fftSize, sampleRate));
 }
 
+/**
+ * Memory-efficient streaming chroma: computes FFT + chroma per frame without
+ * materialising the full magnitude spectrogram. This cuts peak memory from
+ * O(frames × bins) down to O(1) scratch buffers + O(frames × 12) output.
+ */
+export function chromaSequenceStreaming(
+  pcm: Float32Array,
+  opts: SpectrogramOptions,
+): Float32Array[] {
+  const { fftSize, hop, sampleRate } = opts;
+  const numFrames = Math.max(
+    0,
+    Math.floor((pcm.length - fftSize) / hop) + 1,
+  );
+  if (numFrames === 0) return [];
+
+  const bins = fftSize / 2 + 1;
+  const re = new Float32Array(fftSize);
+  const im = new Float32Array(fftSize);
+  const window = hannWindow(fftSize);
+  const out: Float32Array[] = new Array(numFrames);
+
+  for (let f = 0; f < numFrames; f++) {
+    const start = f * hop;
+    // Window into re[], clear im[]
+    for (let i = 0; i < fftSize; i++) {
+      re[i] = (start + i < pcm.length ? pcm[start + i] : 0) * window[i];
+      im[i] = 0;
+    }
+    fft(re, im);
+    // Compute chroma directly from the magnitude spectrum
+    const chroma = new Float32Array(12);
+    for (let k = 1; k < bins; k++) {
+      const mag = Math.sqrt(re[k] * re[k] + im[k] * im[k]);
+      const freq = (k * sampleRate) / fftSize;
+      if (freq < 55 || freq > 5000) continue;
+      const midi = 69 + 12 * Math.log2(freq / 440);
+      const pc = ((Math.round(midi) % 12) + 12) % 12;
+      chroma[pc] += mag;
+    }
+    let max = 0;
+    for (let i = 0; i < 12; i++) if (chroma[i] > max) max = chroma[i];
+    if (max > 0) for (let i = 0; i < 12; i++) chroma[i] /= max;
+    out[f] = chroma;
+  }
+  return out;
+}
+
 /** Per-frame energy (RMS) of mono PCM — used to skip silence. */
 export function energyEnvelope(
   pcm: Float32Array,
