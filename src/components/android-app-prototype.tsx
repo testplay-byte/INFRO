@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   Upload,
   Play,
+  Pause,
   Search,
   Columns,
   FileJson,
@@ -14,12 +15,16 @@ import {
   Download,
   Check,
   X,
-  Clock,
   Film,
   Music,
+  Settings,
   ChevronRight,
-  RefreshCw,
-  TrendingUp,
+  SkipBack,
+  SkipForward,
+  Link2,
+  Volume2,
+  VolumeX,
+  Maximize,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -86,6 +91,8 @@ const SAMPLE_MATCHES: MatchItem[] = [
   },
 ];
 
+const DURATION = 200;
+
 export function AndroidAppPrototype() {
   const [screen, setScreen] = useState<Screen>("home");
   const [mode, setMode] = useState<Mode>("combined");
@@ -94,29 +101,38 @@ export function AndroidAppPrototype() {
   const [hasSignature, setHasSignature] = useState(false);
   const [hasDetectVideo, setHasDetectVideo] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [progressDetail, setProgressDetail] = useState("");
+  const [progressStage, setProgressStage] = useState(0);
+  const [showSettings, setShowSettings] = useState(false);
+  const [settings, setSettings] = useState({
+    similarityThreshold: 90,
+    minMatchDuration: 10,
+    maxGap: 1.0,
+    matchDensity: 90,
+    frameSampleRate: 2,
+    audioSampleRate: 30,
+  });
 
-  // Simulate progress
   const startAnalysis = (target: Screen) => {
     setScreen(target === "results-compare" ? "compare-progress" : "detect-progress");
     setProgress(0);
+    setProgressStage(0);
     const stages = [
-      { p: 0.15, d: "Decoding audio..." },
-      { p: 0.35, d: "Generating fingerprints..." },
-      { p: 0.55, d: "Extracting video frames..." },
-      { p: 0.75, d: "Matching fingerprints..." },
-      { p: 0.9, d: "Inferring intro/outro..." },
-      { p: 1.0, d: "Complete" },
+      { p: 0.15, s: 1 },
+      { p: 0.35, s: 2 },
+      { p: 0.55, s: 3 },
+      { p: 0.75, s: 4 },
+      { p: 0.92, s: 5 },
+      { p: 1.0, s: 6 },
     ];
     let i = 0;
     const interval = setInterval(() => {
       if (i >= stages.length) {
         clearInterval(interval);
-        setScreen(target);
+        setTimeout(() => setScreen(target), 300);
         return;
       }
       setProgress(stages[i].p);
-      setProgressDetail(stages[i].d);
+      setProgressStage(stages[i].s);
       i++;
     }, 700);
   };
@@ -140,15 +156,21 @@ export function AndroidAppPrototype() {
           setHasVideoB={setHasVideoB}
           onBack={() => setScreen("home")}
           onAnalyze={() => startAnalysis("results-compare")}
+          onOpenSettings={() => setShowSettings(true)}
+          settings={settings}
+        />
+      )}
+
+      {showSettings && (
+        <SettingsSheet
+          settings={settings}
+          setSettings={setSettings}
+          onClose={() => setShowSettings(false)}
         />
       )}
 
       {screen === "compare-progress" && (
-        <ProgressScreen
-          progress={progress}
-          detail={progressDetail}
-          mode={mode}
-        />
+        <ProgressScreen progress={progress} stage={progressStage} mode={mode} />
       )}
 
       {screen === "detect-setup" && (
@@ -159,16 +181,13 @@ export function AndroidAppPrototype() {
           setHasDetectVideo={setHasDetectVideo}
           onBack={() => setScreen("home")}
           onDetect={() => startAnalysis("results-detect")}
+          onOpenSettings={() => setShowSettings(true)}
+          settings={settings}
         />
       )}
 
       {screen === "detect-progress" && (
-        <ProgressScreen
-          progress={progress}
-          detail={progressDetail}
-          mode="audio"
-          isDetect
-        />
+        <ProgressScreen progress={progress} stage={progressStage} mode="audio" isDetect />
       )}
 
       {screen === "results-compare" && (
@@ -208,57 +227,60 @@ function HomeScreen({
   onDetect: () => void;
 }) {
   return (
-    <div className="p-6 pb-12">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-10 pt-4">
-        <div className="w-11 h-11 rounded-xl bg-[#B45309] flex items-center justify-center">
-          <span className="text-white font-bold text-lg">I</span>
+    <div className="flex flex-col min-h-[calc(800px-36px)] px-6 pt-8 pb-8">
+      {/* Logo */}
+      <div className="flex items-center gap-2.5 mb-auto mt-4">
+        <div className="w-9 h-9 rounded-xl bg-[#B45309] flex items-center justify-center shadow-sm">
+          <span className="text-white font-bold text-base">I</span>
         </div>
-        <div>
-          <h1 className="text-xl font-bold tracking-tight">Infro</h1>
-          <p className="text-xs text-[#78716C]">Intro &amp; Outro Detector</p>
+        <span className="text-lg font-bold tracking-tight">Infro</span>
+      </div>
+
+      {/* Center content */}
+      <div className="py-8">
+        <h1 className="text-[26px] font-bold leading-[1.2] mb-2">
+          Find intros,<br />outros &amp; matches
+        </h1>
+        <p className="text-[14px] text-[#78716C] leading-relaxed mb-8">
+          Compare two videos or detect from a signature.
+        </p>
+
+        {/* Two options */}
+        <div className="space-y-3">
+          <button
+            onClick={onCompare}
+            className="w-full text-left bg-white border border-[#E7E5E4] rounded-2xl p-4 active:scale-[0.98] transition-transform flex items-center gap-4"
+          >
+            <div className="w-11 h-11 rounded-xl bg-[#B45309]/10 flex items-center justify-center shrink-0">
+              <Columns className="w-5 h-5 text-[#B45309]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-[15px] font-bold">Compare videos</h3>
+              <p className="text-[12px] text-[#78716C] mt-0.5">Find shared segments between two videos</p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-[#D6D3D1] shrink-0" />
+          </button>
+
+          <button
+            onClick={onDetect}
+            className="w-full text-left bg-white border border-[#E7E5E4] rounded-2xl p-4 active:scale-[0.98] transition-transform flex items-center gap-4"
+          >
+            <div className="w-11 h-11 rounded-xl bg-[#4D7C0F]/10 flex items-center justify-center shrink-0">
+              <Search className="w-5 h-5 text-[#4D7C0F]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-[15px] font-bold">Detect from signature</h3>
+              <p className="text-[12px] text-[#78716C] mt-0.5">Find intro/outro in a new video</p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-[#D6D3D1] shrink-0" />
+          </button>
         </div>
       </div>
 
-      <h2 className="text-[28px] font-bold leading-tight mb-2">What do you want to do?</h2>
-      <p className="text-[15px] text-[#78716C] leading-relaxed mb-8">
-        Compare two videos to find shared segments, or detect intro/outro in a new video using a saved signature.
-      </p>
-
-      {/* Compare card */}
-      <button
-        onClick={onCompare}
-        className="w-full text-left bg-white border border-[#E7E5E4] rounded-2xl p-5 mb-4 active:scale-[0.98] transition-transform"
-      >
-        <div className="w-12 h-12 rounded-xl bg-[#B45309] flex items-center justify-center mb-4">
-          <Columns className="w-6 h-6 text-white" />
-        </div>
-        <h3 className="text-lg font-bold mb-1">Compare two videos</h3>
-        <p className="text-sm text-[#78716C] leading-relaxed">
-          Upload two videos and find matching intro, outro, and shared clips. Export a signature for later use.
-        </p>
-      </button>
-
-      {/* Detect card */}
-      <button
-        onClick={onDetect}
-        className="w-full text-left bg-white border border-[#E7E5E4] rounded-2xl p-5 active:scale-[0.98] transition-transform"
-      >
-        <div className="w-12 h-12 rounded-xl bg-[#4D7C0F] flex items-center justify-center mb-4">
-          <Search className="w-6 h-6 text-white" />
-        </div>
-        <h3 className="text-lg font-bold mb-1">Detect from signature</h3>
-        <p className="text-sm text-[#78716C] leading-relaxed">
-          Upload a signature JSON and a new video. Infro will find where the intro and outro appear.
-        </p>
-      </button>
-
-      {/* Info */}
-      <div className="mt-8 flex items-start gap-2 text-xs text-[#78716C]">
-        <Shield className="w-4 h-4 mt-0.5 shrink-0 text-[#4D7C0F]" />
-        <p className="leading-relaxed">
-          All processing happens on your device. Your videos never leave your phone.
-        </p>
+      {/* Bottom */}
+      <div className="flex items-center gap-1.5 text-[11px] text-[#A8A29E]">
+        <Shield className="w-3 h-3 text-[#4D7C0F]" />
+        <span>All processing happens on your device</span>
       </div>
     </div>
   );
@@ -275,6 +297,8 @@ function CompareSetupScreen({
   setHasVideoB,
   onBack,
   onAnalyze,
+  onOpenSettings,
+  settings,
 }: {
   mode: Mode;
   setMode: (m: Mode) => void;
@@ -284,31 +308,35 @@ function CompareSetupScreen({
   setHasVideoB: (v: boolean) => void;
   onBack: () => void;
   onAnalyze: () => void;
+  onOpenSettings: () => void;
+  settings: typeof DEFAULT_SETTINGS;
 }) {
   const canAnalyze = hasVideoA && hasVideoB;
 
   return (
-    <div className="p-6 pb-12">
+    <div className="flex flex-col min-h-[calc(800px-36px)] px-6 pt-6 pb-8">
       {/* Top bar */}
-      <div className="flex items-center gap-3 mb-6 pt-4">
-        <button onClick={onBack} className="w-9 h-9 rounded-full flex items-center justify-center active:bg-neutral-100">
+      <div className="flex items-center justify-between mb-6">
+        <button onClick={onBack} className="w-9 h-9 -ml-1.5 rounded-full flex items-center justify-center active:bg-neutral-100">
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <h1 className="text-xl font-bold">Compare Videos</h1>
+        <h1 className="text-[17px] font-bold">Compare Videos</h1>
+        <button onClick={onOpenSettings} className="w-9 h-9 -mr-1.5 rounded-full flex items-center justify-center active:bg-neutral-100">
+          <Settings className="w-[18px] h-[18px]" />
+        </button>
       </div>
 
-      {/* Mode selector */}
-      <p className="text-[11px] font-bold text-[#78716C] tracking-wider mb-3">COMPARISON MODE</p>
-      <div className="flex gap-2 mb-7">
+      {/* Mode selector — segmented control */}
+      <div className="bg-[#F5F5F0] rounded-xl p-1 flex gap-1 mb-6">
         {(["audio", "video", "combined"] as Mode[]).map((m) => (
           <button
             key={m}
             onClick={() => setMode(m)}
             className={cn(
-              "flex-1 py-2.5 rounded-xl text-sm font-semibold capitalize transition-all",
+              "flex-1 py-2.5 rounded-lg text-[13px] font-semibold capitalize transition-all",
               mode === m
-                ? "bg-[#B45309] text-white"
-                : "bg-white text-[#1C1917] border border-[#E7E5E4]",
+                ? "bg-white text-[#B45309] shadow-sm"
+                : "text-[#78716C]",
             )}
           >
             {m}
@@ -316,83 +344,252 @@ function CompareSetupScreen({
         ))}
       </div>
 
+      {/* Mode description */}
+      <div className="bg-[#B45309]/5 border border-[#B45309]/15 rounded-xl p-3 mb-6">
+        <p className="text-[12px] text-[#78716C] leading-relaxed">
+          {mode === "audio" && "🎵 Matches audio fingerprints only — fastest, best for reused music"}
+          {mode === "video" && "🎬 Matches visual frames — best when audio differs"}
+          {mode === "combined" && "🎯 Fuses audio + video — most accurate, recommended"}
+        </p>
+      </div>
+
       {/* Video A */}
-      <p className="text-[11px] font-bold text-[#78716C] tracking-wider mb-2">VIDEO A</p>
-      <button
-        onClick={() => setHasVideoA(true)}
-        className={cn(
-          "w-full py-4 rounded-xl text-sm font-medium mb-6 border transition-all flex items-center justify-center gap-2",
-          hasVideoA
-            ? "bg-[#4D7C0F]/10 border-[#4D7C0F]/30 text-[#4D7C0F]"
-            : "bg-white border-[#E7E5E4] text-[#1C1917]",
-        )}
-      >
-        {hasVideoA ? (
-          <>
-            <Check className="w-4 h-4" />
-            <span>episode_01.mp4 · 24:30</span>
-          </>
-        ) : (
-          <>
-            <Upload className="w-4 h-4 text-[#78716C]" />
-            <span>Select video A</span>
-          </>
-        )}
-      </button>
+      <VideoPicker
+        label="Video A"
+        selected={hasVideoA}
+        onSelect={() => setHasVideoA(true)}
+        fileName="episode_01.mp4"
+        duration="24:30"
+      />
 
       {/* Video B */}
-      <p className="text-[11px] font-bold text-[#78716C] tracking-wider mb-2">VIDEO B</p>
+      <VideoPicker
+        label="Video B"
+        selected={hasVideoB}
+        onSelect={() => setHasVideoB(true)}
+        fileName="episode_02.mp4"
+        duration="23:45"
+      />
+
+      <div className="mt-auto pt-6">
+        <button
+          onClick={onAnalyze}
+          disabled={!canAnalyze}
+          className={cn(
+            "w-full py-3.5 rounded-xl text-[15px] font-bold transition-all",
+            canAnalyze
+              ? "bg-[#B45309] text-white active:scale-[0.98]"
+              : "bg-[#E7E5E4] text-[#A8A29E]",
+          )}
+        >
+          Analyze Similarity
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function VideoPicker({
+  label,
+  selected,
+  onSelect,
+  fileName,
+  duration,
+}: {
+  label: string;
+  selected: boolean;
+  onSelect: () => void;
+  fileName: string;
+  duration: string;
+}) {
+  return (
+    <div className="mb-4">
+      <p className="text-[11px] font-bold text-[#78716C] tracking-wider mb-2">{label.toUpperCase()}</p>
       <button
-        onClick={() => setHasVideoB(true)}
+        onClick={onSelect}
         className={cn(
-          "w-full py-4 rounded-xl text-sm font-medium mb-8 border transition-all flex items-center justify-center gap-2",
-          hasVideoB
-            ? "bg-[#4D7C0F]/10 border-[#4D7C0F]/30 text-[#4D7C0F]"
-            : "bg-white border-[#E7E5E4] text-[#1C1917]",
+          "w-full rounded-xl border-2 border-dashed transition-all flex items-center gap-3 p-4",
+          selected
+            ? "border-[#4D7C0F]/40 bg-[#4D7C0F]/5"
+            : "border-[#E7E5E4] bg-white active:scale-[0.99]",
         )}
       >
-        {hasVideoB ? (
-          <>
-            <Check className="w-4 h-4" />
-            <span>episode_02.mp4 · 23:45</span>
-          </>
-        ) : (
-          <>
+        <div
+          className={cn(
+            "w-10 h-10 rounded-lg flex items-center justify-center shrink-0",
+            selected ? "bg-[#4D7C0F]/15" : "bg-[#F5F5F0]",
+          )}
+        >
+          {selected ? (
+            <Check className="w-5 h-5 text-[#4D7C0F]" />
+          ) : (
             <Upload className="w-4 h-4 text-[#78716C]" />
-            <span>Select video B</span>
-          </>
-        )}
-      </button>
-
-      {/* Analyze button */}
-      <button
-        onClick={onAnalyze}
-        disabled={!canAnalyze}
-        className={cn(
-          "w-full py-4 rounded-xl text-base font-bold transition-all",
-          canAnalyze
-            ? "bg-[#B45309] text-white active:scale-[0.98]"
-            : "bg-[#E7E5E4] text-[#78716C]",
-        )}
-      >
-        Analyze Similarity
-      </button>
-
-      {/* Mode description */}
-      <div className="mt-6 bg-white border border-[#E7E5E4] rounded-xl p-4">
-        <div className="flex items-center gap-2 mb-2">
-          <Zap className="w-4 h-4 text-[#B45309]" />
-          <span className="text-sm font-semibold">
-            {mode === "audio" && "Audio mode — fastest"}
-            {mode === "video" && "Video mode — visual matching"}
-            {mode === "combined" && "Combined mode — most accurate"}
-          </span>
+          )}
         </div>
-        <p className="text-xs text-[#78716C] leading-relaxed">
-          {mode === "audio" && "Matches using audio fingerprints only. Best for intros/outros with reused music. ~10× faster than video."}
-          {mode === "video" && "Matches using visual frame hashes. Best when audio was replaced but visuals are identical."}
-          {mode === "combined" && "Fuses both audio and video signals. Catches matches that either mode alone would miss."}
-        </p>
+        <div className="flex-1 text-left min-w-0">
+          {selected ? (
+            <>
+              <p className="text-[14px] font-semibold truncate">{fileName}</p>
+              <p className="text-[12px] text-[#78716C]">{duration} · ready</p>
+            </>
+          ) : (
+            <>
+              <p className="text-[14px] font-medium text-[#1C1917]">Tap to select</p>
+              <p className="text-[12px] text-[#78716C]">mp4, mov, webm, mkv</p>
+            </>
+          )}
+        </div>
+      </button>
+    </div>
+  );
+}
+
+// ===================== SETTINGS SHEET =====================
+
+const DEFAULT_SETTINGS = {
+  similarityThreshold: 90,
+  minMatchDuration: 10,
+  maxGap: 1.0,
+  matchDensity: 90,
+  frameSampleRate: 2,
+  audioSampleRate: 30,
+};
+
+function SettingsSheet({
+  settings,
+  setSettings,
+  onClose,
+}: {
+  settings: typeof DEFAULT_SETTINGS;
+  setSettings: (s: typeof DEFAULT_SETTINGS) => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-end" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/40" />
+      <div
+        className="relative w-full bg-white rounded-t-3xl p-6 pb-8 max-h-[80%] overflow-y-auto no-scrollbar"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="w-10 h-1 bg-[#E7E5E4] rounded-full mx-auto mb-5" />
+
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-bold">Analysis Settings</h3>
+          <button onClick={onClose} className="text-[#78716C] text-sm font-medium">Done</button>
+        </div>
+
+        <div className="space-y-5">
+          <SettingSlider
+            label="Similarity threshold"
+            value={settings.similarityThreshold}
+            min={70}
+            max={98}
+            step={1}
+            unit="%"
+            onChange={(v) => setSettings({ ...settings, similarityThreshold: v })}
+          />
+          <SettingSlider
+            label="Min match duration"
+            value={settings.minMatchDuration}
+            min={2}
+            max={30}
+            step={1}
+            unit="s"
+            onChange={(v) => setSettings({ ...settings, minMatchDuration: v })}
+          />
+          <SettingSlider
+            label="Max gap within match"
+            value={settings.maxGap}
+            min={0.3}
+            max={3}
+            step={0.1}
+            unit="s"
+            onChange={(v) => setSettings({ ...settings, maxGap: v })}
+          />
+          <SettingSlider
+            label="Match density"
+            value={settings.matchDensity}
+            min={30}
+            max={95}
+            step={5}
+            unit="%"
+            onChange={(v) => setSettings({ ...settings, matchDensity: v })}
+          />
+          <SettingSlider
+            label="Frame sample rate"
+            value={settings.frameSampleRate}
+            min={1}
+            max={6}
+            step={1}
+            unit=" fps"
+            onChange={(v) => setSettings({ ...settings, frameSampleRate: v })}
+          />
+          <SettingSlider
+            label="Audio sample rate"
+            value={settings.audioSampleRate}
+            min={8}
+            max={48}
+            step={2}
+            unit=" kHz"
+            onChange={(v) => setSettings({ ...settings, audioSampleRate: v })}
+          />
+        </div>
+
+        <button
+          onClick={onClose}
+          className="w-full mt-6 py-3.5 rounded-xl bg-[#B45309] text-white font-bold text-sm"
+        >
+          Apply Settings
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function SettingSlider({
+  label,
+  value,
+  min,
+  max,
+  step,
+  unit,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  unit: string;
+  onChange: (v: number) => void;
+}) {
+  const pct = ((value - min) / (max - min)) * 100;
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-2">
+        <span className="text-[13px] font-medium text-[#1C1917]">{label}</span>
+        <span className="text-[13px] font-mono font-semibold text-[#B45309]">
+          {value}{unit}
+        </span>
+      </div>
+      <div className="relative h-1.5 bg-[#F5F5F0] rounded-full">
+        <div
+          className="absolute h-full bg-[#B45309] rounded-full"
+          style={{ width: `${pct}%` }}
+        />
+        <div
+          className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white border-2 border-[#B45309] rounded-full shadow-sm"
+          style={{ left: `calc(${pct}% - 8px)` }}
+        />
+        <input
+          type="range"
+          min={min}
+          max={max}
+          step={step}
+          value={value}
+          onChange={(e) => onChange(Number(e.target.value))}
+          className="absolute inset-0 w-full opacity-0 cursor-pointer"
+        />
       </div>
     </div>
   );
@@ -407,6 +604,8 @@ function DetectSetupScreen({
   setHasDetectVideo,
   onBack,
   onDetect,
+  onOpenSettings,
+  settings: _settings,
 }: {
   hasSignature: boolean;
   hasDetectVideo: boolean;
@@ -414,84 +613,91 @@ function DetectSetupScreen({
   setHasDetectVideo: (v: boolean) => void;
   onBack: () => void;
   onDetect: () => void;
+  onOpenSettings: () => void;
+  settings: typeof DEFAULT_SETTINGS;
 }) {
   const canDetect = hasSignature && hasDetectVideo;
 
   return (
-    <div className="p-6 pb-12">
+    <div className="flex flex-col min-h-[calc(800px-36px)] px-6 pt-6 pb-8">
       {/* Top bar */}
-      <div className="flex items-center gap-3 mb-6 pt-4">
-        <button onClick={onBack} className="w-9 h-9 rounded-full flex items-center justify-center active:bg-neutral-100">
+      <div className="flex items-center justify-between mb-6">
+        <button onClick={onBack} className="w-9 h-9 -ml-1.5 rounded-full flex items-center justify-center active:bg-neutral-100">
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <h1 className="text-xl font-bold">Detect from Signature</h1>
+        <h1 className="text-[17px] font-bold">Detect</h1>
+        <button onClick={onOpenSettings} className="w-9 h-9 -mr-1.5 rounded-full flex items-center justify-center active:bg-neutral-100">
+          <Settings className="w-[18px] h-[18px]" />
+        </button>
       </div>
 
-      <p className="text-sm text-[#78716C] leading-relaxed mb-7">
-        Upload a signature JSON exported from Compare mode, then select a new video.
+      <p className="text-[14px] text-[#78716C] leading-relaxed mb-6">
+        Select a signature JSON and a video. Infro will detect where the intro and outro appear.
       </p>
 
-      {/* Signature */}
-      <p className="text-[11px] font-bold text-[#78716C] tracking-wider mb-2">SIGNATURE FILE</p>
-      <button
-        onClick={() => setHasSignature(true)}
-        className={cn(
-          "w-full py-4 rounded-xl text-sm font-medium mb-6 border transition-all flex items-center justify-center gap-2",
-          hasSignature
-            ? "bg-[#4D7C0F]/10 border-[#4D7C0F]/30 text-[#4D7C0F]"
-            : "bg-white border-[#E7E5E4] text-[#1C1917]",
-        )}
-      >
-        {hasSignature ? (
-          <>
-            <Check className="w-4 h-4" />
-            <span>infro-signature.json · 2 segments</span>
-          </>
-        ) : (
-          <>
-            <FileJson className="w-4 h-4 text-[#78716C]" />
-            <span>Select signature JSON</span>
-          </>
-        )}
-      </button>
+      {/* Signature picker */}
+      <div className="mb-4">
+        <p className="text-[11px] font-bold text-[#78716C] tracking-wider mb-2">SIGNATURE FILE</p>
+        <button
+          onClick={() => setHasSignature(true)}
+          className={cn(
+            "w-full rounded-xl border-2 border-dashed transition-all flex items-center gap-3 p-4",
+            hasSignature
+              ? "border-[#4D7C0F]/40 bg-[#4D7C0F]/5"
+              : "border-[#E7E5E4] bg-white active:scale-[0.99]",
+          )}
+        >
+          <div
+            className={cn(
+              "w-10 h-10 rounded-lg flex items-center justify-center shrink-0",
+              hasSignature ? "bg-[#4D7C0F]/15" : "bg-[#F5F5F0]",
+            )}
+          >
+            {hasSignature ? (
+              <Check className="w-5 h-5 text-[#4D7C0F]" />
+            ) : (
+              <FileJson className="w-4 h-4 text-[#78716C]" />
+            )}
+          </div>
+          <div className="flex-1 text-left min-w-0">
+            {hasSignature ? (
+              <>
+                <p className="text-[14px] font-semibold truncate">infro-signature.json</p>
+                <p className="text-[12px] text-[#78716C]">2 segments · ready</p>
+              </>
+            ) : (
+              <>
+                <p className="text-[14px] font-medium">Tap to select</p>
+                <p className="text-[12px] text-[#78716C]">JSON file from Compare mode</p>
+              </>
+            )}
+          </div>
+        </button>
+      </div>
 
-      {/* Video */}
-      <p className="text-[11px] font-bold text-[#78716C] tracking-wider mb-2">VIDEO FILE</p>
-      <button
-        onClick={() => setHasDetectVideo(true)}
-        className={cn(
-          "w-full py-4 rounded-xl text-sm font-medium mb-8 border transition-all flex items-center justify-center gap-2",
-          hasDetectVideo
-            ? "bg-[#4D7C0F]/10 border-[#4D7C0F]/30 text-[#4D7C0F]"
-            : "bg-white border-[#E7E5E4] text-[#1C1917]",
-        )}
-      >
-        {hasDetectVideo ? (
-          <>
-            <Check className="w-4 h-4" />
-            <span>episode_03.mp4 · 25:12</span>
-          </>
-        ) : (
-          <>
-            <Upload className="w-4 h-4 text-[#78716C]" />
-            <span>Select video</span>
-          </>
-        )}
-      </button>
+      {/* Video picker */}
+      <VideoPicker
+        label="Video"
+        selected={hasDetectVideo}
+        onSelect={() => setHasDetectVideo(true)}
+        fileName="episode_03.mp4"
+        duration="25:12"
+      />
 
-      {/* Detect button */}
-      <button
-        onClick={onDetect}
-        disabled={!canDetect}
-        className={cn(
-          "w-full py-4 rounded-xl text-base font-bold transition-all",
-          canDetect
-            ? "bg-[#B45309] text-white active:scale-[0.98]"
-            : "bg-[#E7E5E4] text-[#78716C]",
-        )}
-      >
-        Detect Intro &amp; Outro
-      </button>
+      <div className="mt-auto pt-6">
+        <button
+          onClick={onDetect}
+          disabled={!canDetect}
+          className={cn(
+            "w-full py-3.5 rounded-xl text-[15px] font-bold transition-all",
+            canDetect
+              ? "bg-[#B45309] text-white active:scale-[0.98]"
+              : "bg-[#E7E5E4] text-[#A8A29E]",
+          )}
+        >
+          Detect Intro &amp; Outro
+        </button>
+      </div>
     </div>
   );
 }
@@ -500,80 +706,97 @@ function DetectSetupScreen({
 
 function ProgressScreen({
   progress,
-  detail,
+  stage,
   mode,
   isDetect = false,
 }: {
   progress: number;
-  detail: string;
+  stage: number;
   mode: Mode;
   isDetect?: boolean;
 }) {
   const stages = [
-    { id: "decode", label: "Decoding media" },
-    { id: "fingerprint", label: "Generating fingerprints" },
-    { id: "extract", label: "Extracting frames" },
-    { id: "match", label: "Matching fingerprints" },
-    { id: "infer", label: "Inferring intro/outro" },
+    { id: 1, label: "Decoding media", icon: "🎬", desc: "Reading video and audio tracks" },
+    { id: 2, label: "Extracting audio", icon: "🎵", desc: "Decoding audio to PCM samples" },
+    { id: 3, label: "Generating fingerprints", icon: "🔐", desc: "Computing chroma + hash features" },
+    { id: 4, label: "Matching", icon: "🔍", desc: "Scanning for matching segments" },
+    { id: 5, label: "Inferring intro/outro", icon: "✨", desc: "Identifying intro and outro" },
+    { id: 6, label: "Complete", icon: "✅", desc: "Results ready" },
   ];
 
-  const currentStageIdx = Math.min(
-    stages.length - 1,
-    Math.floor(progress * stages.length),
-  );
-
   return (
-    <div className="p-6 pt-16">
-      <h1 className="text-2xl font-bold mb-2">{isDetect ? "Detecting..." : "Analyzing..."}</h1>
-      <p className="text-sm text-[#78716C] mb-8">
-        {isDetect ? "Matching against signature" : `Mode: ${mode}`}
-      </p>
-
-      {/* Progress bar */}
-      <div className="mb-8">
-        <div className="flex justify-between text-xs mb-2">
-          <span className="font-medium text-[#78716C]">{detail || "Working..."}</span>
-          <span className="font-mono text-[#78716C]">{Math.round(progress * 100)}%</span>
-        </div>
-        <div className="h-2 bg-[#E7E5E4] rounded-full overflow-hidden">
-          <div
-            className="h-full bg-[#B45309] rounded-full transition-all duration-500"
-            style={{ width: `${progress * 100}%` }}
-          />
+    <div className="flex flex-col min-h-[calc(800px-36px)] px-6 pt-12 pb-8">
+      {/* Animated visual */}
+      <div className="flex justify-center mb-8">
+        <div className="relative w-24 h-24">
+          {/* Outer ring */}
+          <svg className="w-24 h-24 -rotate-90" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="42" fill="none" stroke="#F5F5F0" strokeWidth="6" />
+            <circle
+              cx="50"
+              cy="50"
+              r="42"
+              fill="none"
+              stroke="#B45309"
+              strokeWidth="6"
+              strokeLinecap="round"
+              strokeDasharray={`${2 * Math.PI * 42}`}
+              strokeDashoffset={`${2 * Math.PI * 42 * (1 - progress)}`}
+              className="transition-all duration-500"
+            />
+          </svg>
+          {/* Center percentage */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-xl font-bold font-mono">{Math.round(progress * 100)}%</span>
+          </div>
         </div>
       </div>
 
+      <h2 className="text-center text-xl font-bold mb-1">
+        {isDetect ? "Detecting..." : "Analyzing..."}
+      </h2>
+      <p className="text-center text-[13px] text-[#78716C] mb-8">
+        {isDetect ? "Matching against signature" : `Mode: ${mode}`}
+      </p>
+
       {/* Stage list */}
-      <div className="space-y-1">
-        {stages.map((s, i) => {
-          const isDone = i < currentStageIdx;
-          const isActive = i === currentStageIdx;
-          const isPending = i > currentStageIdx;
+      <div className="space-y-1.5">
+        {stages.map((s) => {
+          const isDone = stage > s.id;
+          const isActive = stage === s.id;
+          const isPending = stage < s.id;
           return (
             <div
               key={s.id}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors",
+                "flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all",
                 isActive && "bg-[#B45309]/5",
               )}
             >
-              <div className="w-5 h-5 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base shrink-0">
                 {isDone ? (
-                  <Check className="w-4 h-4 text-[#4D7C0F]" />
+                  <div className="w-6 h-6 rounded-full bg-[#4D7C0F] flex items-center justify-center">
+                    <Check className="w-3.5 h-3.5 text-white" />
+                  </div>
                 ) : isActive ? (
-                  <div className="w-4 h-4 border-2 border-[#B45309] border-t-transparent rounded-full animate-spin" />
+                  <div className="w-6 h-6 rounded-full border-2 border-[#B45309] border-t-transparent animate-spin" />
                 ) : (
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#D6D3D1]" />
+                  <span className="text-base opacity-30">{s.icon}</span>
                 )}
               </div>
-              <span
-                className={cn(
-                  "text-sm",
-                  isActive ? "font-semibold" : isDone ? "text-[#78716C]" : "text-[#D6D3D1]",
+              <div className="flex-1 min-w-0">
+                <p
+                  className={cn(
+                    "text-[13px] font-semibold",
+                    isPending && "text-[#D6D3D1]",
+                  )}
+                >
+                  {s.label}
+                </p>
+                {isActive && (
+                  <p className="text-[11px] text-[#78716C] mt-0.5">{s.desc}</p>
                 )}
-              >
-                {s.label}
-              </span>
+              </div>
             </div>
           );
         })}
@@ -595,100 +818,439 @@ function ResultsScreen({
   onNew: () => void;
   onBack: () => void;
 }) {
+  const [playing, setPlaying] = useState(false);
+  const [linked, setLinked] = useState(true);
   const [showExportSheet, setShowExportSheet] = useState(false);
   const intro = matches.find((m) => m.isIntro);
   const outro = matches.find((m) => m.isOutro);
+  const [timeA, setTimeA] = useState(5.0);
+  const [timeB, setTimeB] = useState(8.2);
+
+  const seekBoth = (frac: number) => {
+    setTimeA(frac * DURATION);
+    setTimeB(frac * DURATION + 3.2);
+  };
 
   return (
-    <div className="pb-8">
+    <div className="flex flex-col min-h-[calc(800px-36px)]">
       {/* Top bar */}
-      <div className="flex items-center gap-3 px-6 pt-4 pb-4 sticky top-0 bg-[#FAFAF7] z-10 border-b border-[#E7E5E4]">
-        <button onClick={onBack} className="w-9 h-9 rounded-full flex items-center justify-center active:bg-neutral-100">
+      <div className="flex items-center gap-3 px-6 pt-4 pb-3 sticky top-0 bg-[#FAFAF7] z-10 border-b border-[#E7E5E4]">
+        <button onClick={onBack} className="w-8 h-8 -ml-1 rounded-full flex items-center justify-center active:bg-neutral-100">
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <h1 className="text-lg font-bold">Results</h1>
+        <h1 className="text-[16px] font-bold flex-1">Results</h1>
         <button
           onClick={() => setShowExportSheet(true)}
-          className="ml-auto px-3 py-1.5 rounded-lg bg-white border border-[#E7E5E4] flex items-center gap-1.5 text-xs font-medium"
+          className="px-2.5 py-1 rounded-lg bg-white border border-[#E7E5E4] flex items-center gap-1 text-[11px] font-medium"
         >
-          <Download className="w-3.5 h-3.5" />
+          <Download className="w-3 h-3" />
           Export
         </button>
       </div>
 
-      <div className="p-6">
-        {/* Intro/Outro banner */}
-        {(intro || outro) && (
-          <div className="bg-white border border-[#E7E5E4] rounded-2xl p-4 mb-5">
-            <div className="flex items-center gap-2 mb-3">
-              <Activity className="w-4 h-4 text-[#B45309]" />
-              <span className="text-sm font-semibold">
-                {matches.length} matches found
+      <div className="px-4 py-4 space-y-4">
+        {/* Dual video previews */}
+        <div className="grid grid-cols-2 gap-2.5">
+          <VideoPreview label="A" time={timeA} duration={DURATION} matches={matches} slot="A" />
+          <VideoPreview label="B" time={timeB} duration={DURATION} matches={matches} slot="B" />
+        </div>
+
+        {/* Per-video seek bars */}
+        <div className="grid grid-cols-2 gap-2.5">
+          <SeekBar time={timeA} duration={DURATION} matches={matches} slot="A" onSeek={(f) => setTimeA(f * DURATION)} />
+          <SeekBar time={timeB} duration={DURATION} matches={matches} slot="B" onSeek={(f) => setTimeB(f * DURATION)} />
+        </div>
+
+        {/* Shared seek bar */}
+        <div className="bg-white border border-[#E7E5E4] rounded-xl p-3">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1.5">
+              <Link2 className={cn("w-3.5 h-3.5", linked ? "text-[#4D7C0F]" : "text-[#D6D3D1]")} />
+              <span className="text-[11px] font-medium text-[#78716C]">
+                {linked ? "Linked seek" : "Independent"}
               </span>
             </div>
+            <span className="text-[11px] font-mono text-[#78716C]">
+              {fmt(timeA)} · {fmt(timeB)}
+            </span>
+          </div>
+          {/* Combined seek bar with both tracks */}
+          <CombinedSeekBar
+            timeA={timeA}
+            timeB={timeB}
+            duration={DURATION}
+            matches={matches}
+            onSeek={seekBoth}
+          />
+        </div>
+
+        {/* Playback controls */}
+        <div className="flex items-center justify-center gap-3 bg-white border border-[#E7E5E4] rounded-xl py-2.5">
+          <button className="w-9 h-9 rounded-full flex items-center justify-center active:bg-neutral-100">
+            <SkipBack className="w-4 h-4" />
+          </button>
+          <span className="text-[10px] font-medium text-[#78716C]">10s</span>
+          <button
+            onClick={() => setPlaying(!playing)}
+            className="w-12 h-12 rounded-full bg-[#B45309] flex items-center justify-center active:scale-95 transition-transform mx-2"
+          >
+            {playing ? (
+              <Pause className="w-5 h-5 text-white" />
+            ) : (
+              <Play className="w-5 h-5 text-white translate-x-0.5" />
+            )}
+          </button>
+          <span className="text-[10px] font-medium text-[#78716C]">10s</span>
+          <button className="w-9 h-9 rounded-full flex items-center justify-center active:bg-neutral-100">
+            <SkipForward className="w-4 h-4" />
+          </button>
+          <div className="w-px h-5 bg-[#E7E5E4] mx-1" />
+          <button
+            onClick={() => setLinked(!linked)}
+            className={cn(
+              "w-9 h-9 rounded-full flex items-center justify-center transition-colors",
+              linked ? "bg-[#4D7C0F]/10" : "active:bg-neutral-100",
+            )}
+          >
+            <Link2 className={cn("w-4 h-4", linked ? "text-[#4D7C0F]" : "text-[#78716C]")} />
+          </button>
+        </div>
+
+        {/* Timeline */}
+        <div className="bg-white border border-[#E7E5E4] rounded-xl p-3">
+          <p className="text-[10px] font-bold text-[#78716C] tracking-wider mb-2">TIMELINE</p>
+          <DualTimeline matches={matches} duration={DURATION} timeA={timeA} timeB={timeB} />
+        </div>
+
+        {/* Intro/Outro summary */}
+        {(intro || outro) && (
+          <div className="bg-white border border-[#E7E5E4] rounded-xl p-3 space-y-2">
             {intro && (
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-[#4D7C0F] bg-[#4D7C0F]/10 px-2 py-0.5 rounded">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold uppercase text-[#4D7C0F] bg-[#4D7C0F]/10 px-1.5 py-0.5 rounded">
                   Intro
                 </span>
-                <span className="text-sm font-mono">
+                <span className="text-[12px] font-mono">
                   A {fmt(intro.aStart)}–{fmt(intro.aEnd)} · B {fmt(intro.bStart)}–{fmt(intro.bEnd)}
+                </span>
+                <span className="ml-auto text-[11px] font-bold text-[#4D7C0F]">
+                  {Math.round(intro.confidence * 100)}%
                 </span>
               </div>
             )}
             {outro && (
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-[#C2410C] bg-[#C2410C]/10 px-2 py-0.5 rounded">
+                <span className="text-[10px] font-bold uppercase text-[#C2410C] bg-[#C2410C]/10 px-1.5 py-0.5 rounded">
                   Outro
                 </span>
-                <span className="text-sm font-mono">
+                <span className="text-[12px] font-mono">
                   A {fmt(outro.aStart)}–{fmt(outro.aEnd)} · B {fmt(outro.bStart)}–{fmt(outro.bEnd)}
+                </span>
+                <span className="ml-auto text-[11px] font-bold text-[#C2410C]">
+                  {Math.round(outro.confidence * 100)}%
                 </span>
               </div>
             )}
           </div>
         )}
 
-        {/* Timeline */}
-        <p className="text-[11px] font-bold text-[#78716C] tracking-wider mb-2">TIMELINE</p>
-        <div className="bg-white border border-[#E7E5E4] rounded-2xl p-4 mb-5">
-          <MiniTimeline matches={matches} duration={200} />
-        </div>
-
-        {/* Stats */}
-        <p className="text-[11px] font-bold text-[#78716C] tracking-wider mb-2">STATISTICS</p>
-        <div className="bg-white border border-[#E7E5E4] rounded-2xl p-4 mb-5">
-          <div className="grid grid-cols-2 gap-3">
-            <Stat label="Matches" value={matches.length.toString()} />
-            <Stat label="Avg confidence" value="94%" />
-            <Stat label="Longest" value="12.5s" />
-            <Stat label="Processing" value="8.3s" />
-          </div>
+        {/* Stats grid */}
+        <div className="grid grid-cols-2 gap-2.5">
+          <StatCard label="Matches" value={matches.length.toString()} />
+          <StatCard label="Avg confidence" value="94%" />
+          <StatCard label="Longest match" value="12.5s" />
+          <StatCard label="Processing" value="8.3s" />
         </div>
 
         {/* Match list */}
-        <p className="text-[11px] font-bold text-[#78716C] tracking-wider mb-2">MATCHES</p>
-        <div className="space-y-3 mb-6">
-          {matches.map((m) => (
-            <MatchCard key={m.id} match={m} />
-          ))}
+        <div>
+          <p className="text-[10px] font-bold text-[#78716C] tracking-wider mb-2">MATCHES ({matches.length})</p>
+          <div className="space-y-2">
+            {matches.map((m) => (
+              <MatchCard key={m.id} match={m} />
+            ))}
+          </div>
         </div>
 
-        {/* Actions */}
-        <div className="flex gap-3">
-          <button
-            onClick={onNew}
-            className="flex-1 py-3.5 rounded-xl bg-[#B45309] text-white font-bold text-sm active:scale-[0.98] transition-transform"
-          >
-            New Analysis
-          </button>
-        </div>
+        {/* New analysis button */}
+        <button
+          onClick={onNew}
+          className="w-full py-3 rounded-xl bg-[#B45309] text-white font-bold text-[14px] active:scale-[0.98] transition-transform"
+        >
+          New Analysis
+        </button>
       </div>
 
-      {/* Export sheet */}
-      {showExportSheet && (
-        <ExportSheet onClose={() => setShowExportSheet(false)} />
-      )}
+      {showExportSheet && <ExportSheet onClose={() => setShowExportSheet(false)} />}
+    </div>
+  );
+}
+
+function VideoPreview({
+  label,
+  time,
+  duration,
+  matches,
+  slot,
+}: {
+  label: string;
+  time: number;
+  duration: number;
+  matches: MatchItem[];
+  slot: "A" | "B";
+}) {
+  const inMatch = matches.some((m) =>
+    slot === "A" ? time >= m.aStart && time <= m.aEnd : time >= m.bStart && time <= m.bEnd,
+  );
+  return (
+    <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
+      {/* Placeholder gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-neutral-800 to-neutral-900" />
+      {/* Label */}
+      <div className="absolute top-1.5 left-1.5 flex items-center gap-1">
+        <span className="text-[10px] font-bold bg-[#B45309] text-white px-1.5 py-0.5 rounded">
+          {label}
+        </span>
+        {inMatch && (
+          <span className="text-[9px] font-bold bg-white/90 text-[#4D7C0F] px-1.5 py-0.5 rounded">
+            MATCH
+          </span>
+        )}
+      </div>
+      {/* Time */}
+      <div className="absolute bottom-1.5 left-1.5 right-1.5 flex justify-between">
+        <span className="text-[9px] font-mono text-white/90 bg-black/50 px-1.5 py-0.5 rounded">
+          {fmt(time)}
+        </span>
+        <span className="text-[9px] font-mono text-white/60 bg-black/50 px-1.5 py-0.5 rounded">
+          {fmt(duration)}
+        </span>
+      </div>
+      {/* Play icon overlay */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur flex items-center justify-center">
+          <Play className="w-3.5 h-3.5 text-white translate-x-0.5" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SeekBar({
+  time,
+  duration,
+  matches,
+  slot,
+  onSeek,
+}: {
+  time: number;
+  duration: number;
+  matches: MatchItem[];
+  slot: "A" | "B";
+  onSeek: (frac: number) => void;
+}) {
+  const pct = (time / duration) * 100;
+  return (
+    <div
+      className="relative h-6 bg-white border border-[#E7E5E4] rounded-lg cursor-pointer"
+      onClick={(e) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        onSeek((e.clientX - rect.left) / rect.width);
+      }}
+    >
+      {/* Match regions */}
+      {matches.map((m) => {
+        const start = slot === "A" ? m.aStart : m.bStart;
+        const end = slot === "A" ? m.aEnd : m.bEnd;
+        const left = (start / duration) * 100;
+        const width = ((end - start) / duration) * 100;
+        const color = m.isIntro ? "#4D7C0F" : m.isOutro ? "#C2410C" : "#B45309";
+        return (
+          <div
+            key={m.id}
+            className="absolute top-0.5 bottom-0.5 rounded"
+            style={{ left: `${left}%`, width: `${width}%`, backgroundColor: `${color}30`, border: `1px solid ${color}60` }}
+          />
+        );
+      })}
+      {/* Progress */}
+      <div
+        className="absolute top-0 left-0 h-full bg-[#B45309]/20 rounded-l-lg"
+        style={{ width: `${pct}%` }}
+      />
+      {/* Playhead */}
+      <div
+        className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-[#B45309] rounded-full border-2 border-white shadow-sm"
+        style={{ left: `calc(${pct}% - 6px)` }}
+      />
+    </div>
+  );
+}
+
+function CombinedSeekBar({
+  timeA,
+  timeB,
+  duration,
+  matches,
+  onSeek,
+}: {
+  timeA: number;
+  timeB: number;
+  duration: number;
+  matches: MatchItem[];
+  onSeek: (frac: number) => void;
+}) {
+  const pctA = (timeA / duration) * 100;
+  const pctB = (timeB / duration) * 100;
+  return (
+    <div
+      className="relative h-8 bg-[#F5F5F0] rounded-lg cursor-pointer"
+      onClick={(e) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        onSeek((e.clientX - rect.left) / rect.width);
+      }}
+    >
+      {/* Match regions */}
+      {matches.map((m) => {
+        const leftA = (m.aStart / duration) * 100;
+        const widthA = ((m.aEnd - m.aStart) / duration) * 100;
+        const color = m.isIntro ? "#4D7C0F" : m.isOutro ? "#C2410C" : "#B45309";
+        return (
+          <div
+            key={m.id}
+            className="absolute top-0.5 bottom-0.5 rounded"
+            style={{ left: `${leftA}%`, width: `${widthA}%`, backgroundColor: `${color}25`, border: `1px solid ${color}40` }}
+          />
+        );
+      })}
+      {/* A playhead */}
+      <div
+        className="absolute top-0.5 bottom-0.5 w-0.5 bg-[#B45309]"
+        style={{ left: `${pctA}%` }}
+      >
+        <span className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-[#B45309] rounded-full border border-white" />
+      </div>
+      {/* B playhead */}
+      <div
+        className="absolute top-0.5 bottom-0.5 w-0.5 bg-[#4D7C0F]"
+        style={{ left: `${pctB}%` }}
+      >
+        <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-[#4D7C0F] rounded-full border border-white" />
+      </div>
+    </div>
+  );
+}
+
+function DualTimeline({
+  matches,
+  duration,
+  timeA,
+  timeB,
+}: {
+  matches: MatchItem[];
+  duration: number;
+  timeA: number;
+  timeB: number;
+}) {
+  return (
+    <div className="space-y-2">
+      {/* Track A */}
+      <div>
+        <div className="flex justify-between text-[9px] text-[#78716C] mb-1">
+          <span className="font-bold">A</span>
+          <span className="font-mono">{fmt(duration)}</span>
+        </div>
+        <div className="relative h-5 bg-[#F5F5F0] rounded-md overflow-hidden">
+          {matches.map((m) => {
+            const left = (m.aStart / duration) * 100;
+            const width = ((m.aEnd - m.aStart) / duration) * 100;
+            const color = m.isIntro ? "#4D7C0F" : m.isOutro ? "#C2410C" : "#B45309";
+            return (
+              <div
+                key={m.id}
+                className="absolute top-0.5 bottom-0.5 rounded flex items-center justify-center"
+                style={{ left: `${left}%`, width: `${width}%`, backgroundColor: `${color}30`, border: `1px solid ${color}` }}
+              >
+                {(m.isIntro || m.isOutro) && width > 8 && (
+                  <span className="text-[7px] font-bold" style={{ color }}>{m.isIntro ? "INTRO" : "OUTRO"}</span>
+                )}
+              </div>
+            );
+          })}
+          {/* Playhead A */}
+          <div
+            className="absolute top-0 bottom-0 w-0.5 bg-[#B45309]"
+            style={{ left: `${(timeA / duration) * 100}%` }}
+          />
+        </div>
+      </div>
+      {/* Track B */}
+      <div>
+        <div className="flex justify-between text-[9px] text-[#78716C] mb-1">
+          <span className="font-bold">B</span>
+          <span className="font-mono">{fmt(duration)}</span>
+        </div>
+        <div className="relative h-5 bg-[#F5F5F0] rounded-md overflow-hidden">
+          {matches.map((m) => {
+            const left = (m.bStart / duration) * 100;
+            const width = ((m.bEnd - m.bStart) / duration) * 100;
+            const color = m.isIntro ? "#4D7C0F" : m.isOutro ? "#C2410C" : "#B45309";
+            return (
+              <div
+                key={m.id}
+                className="absolute top-0.5 bottom-0.5 rounded"
+                style={{ left: `${left}%`, width: `${width}%`, backgroundColor: `${color}30`, border: `1px solid ${color}` }}
+              />
+            );
+          })}
+          {/* Playhead B */}
+          <div
+            className="absolute top-0 bottom-0 w-0.5 bg-[#4D7C0F]"
+            style={{ left: `${(timeB / duration) * 100}%` }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StatCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="bg-white border border-[#E7E5E4] rounded-xl p-3">
+      <p className="text-[9px] font-medium uppercase tracking-wider text-[#78716C]">{label}</p>
+      <p className="text-lg font-bold mt-0.5">{value}</p>
+    </div>
+  );
+}
+
+function MatchCard({ match }: { match: MatchItem }) {
+  const color = match.isIntro ? "#4D7C0F" : match.isOutro ? "#C2410C" : "#B45309";
+  return (
+    <div className="bg-white border border-[#E7E5E4] rounded-xl p-3">
+      <div className="flex items-center justify-between mb-2">
+        <span
+          className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
+          style={{ color, backgroundColor: `${color}15` }}
+        >
+          {match.label}
+        </span>
+        <span className="text-[13px] font-bold font-mono" style={{ color }}>
+          {Math.round(match.confidence * 100)}%
+        </span>
+      </div>
+      <div className="flex gap-3 text-[12px] font-mono">
+        <span>A {fmt(match.aStart)}–{fmt(match.aEnd)}</span>
+        <span className="text-[#D6D3D1]">·</span>
+        <span>B {fmt(match.bStart)}–{fmt(match.bEnd)}</span>
+      </div>
+      <div className="flex items-center gap-2 pt-2 mt-2 border-t border-[#E7E5E4]">
+        {match.method.map((m, i) => (
+          <span key={i} className="flex items-center gap-1 text-[9px] text-[#78716C] font-mono">
+            {m.startsWith("audio") ? <Music className="w-2.5 h-2.5" /> : <Film className="w-2.5 h-2.5" />}
+            {m}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }
@@ -703,93 +1265,40 @@ function DetectResultsScreen({
   onBack: () => void;
 }) {
   const detections = [
-    {
-      label: "intro",
-      found: true,
-      start: 2.1,
-      end: 14.6,
-      confidence: 0.92,
-      method: ["audio-chroma"],
-    },
-    {
-      label: "outro",
-      found: true,
-      start: 171.3,
-      end: 185.0,
-      confidence: 0.88,
-      method: ["audio-chroma"],
-    },
+    { label: "intro", found: true, start: 2.1, end: 14.6, confidence: 0.92, method: ["audio-chroma"] },
+    { label: "outro", found: true, start: 171.3, end: 185.0, confidence: 0.88, method: ["audio-chroma"] },
   ];
 
   return (
-    <div className="pb-8">
-      {/* Top bar */}
-      <div className="flex items-center gap-3 px-6 pt-4 pb-4 sticky top-0 bg-[#FAFAF7] z-10 border-b border-[#E7E5E4]">
-        <button onClick={onBack} className="w-9 h-9 rounded-full flex items-center justify-center active:bg-neutral-100">
+    <div className="flex flex-col min-h-[calc(800px-36px)]">
+      <div className="flex items-center gap-3 px-6 pt-4 pb-3 sticky top-0 bg-[#FAFAF7] z-10 border-b border-[#E7E5E4]">
+        <button onClick={onBack} className="w-8 h-8 -ml-1 rounded-full flex items-center justify-center active:bg-neutral-100">
           <ArrowLeft className="w-5 h-5" />
         </button>
-        <h1 className="text-lg font-bold">Detection Results</h1>
+        <h1 className="text-[16px] font-bold flex-1">Detection</h1>
       </div>
 
-      <div className="p-6">
-        <div className="bg-white border border-[#E7E5E4] rounded-2xl p-4 mb-5">
-          <div className="flex items-center gap-2 mb-2">
+      <div className="px-6 py-4 space-y-4">
+        <div className="bg-white border border-[#E7E5E4] rounded-xl p-3">
+          <div className="flex items-center gap-2 mb-1">
             <Search className="w-4 h-4 text-[#B45309]" />
-            <span className="text-sm font-semibold">
-              {detections.filter((d) => d.found).length} of {detections.length} segments found
+            <span className="text-[14px] font-semibold">
+              {detections.filter((d) => d.found).length} of {detections.length} found
             </span>
           </div>
-          <p className="text-xs text-[#78716C]">Processed in 6.1s · audio only</p>
+          <p className="text-[11px] text-[#78716C]">Processed in 6.1s · audio only</p>
         </div>
 
-        {/* Detections */}
-        <div className="space-y-3 mb-6">
-          {detections.map((d, i) => (
-            <DetectionCard key={i} detection={d} />
-          ))}
-        </div>
+        {detections.map((d, i) => (
+          <DetectionCard key={i} detection={d} />
+        ))}
 
         <button
           onClick={onNew}
-          className="w-full py-3.5 rounded-xl bg-[#B45309] text-white font-bold text-sm active:scale-[0.98] transition-transform"
+          className="w-full py-3 rounded-xl bg-[#B45309] text-white font-bold text-[14px] active:scale-[0.98] transition-transform"
         >
           New Detection
         </button>
-      </div>
-    </div>
-  );
-}
-
-// ===================== SHARED COMPONENTS =====================
-
-function MatchCard({ match }: { match: MatchItem }) {
-  const color = match.isIntro ? "#4D7C0F" : match.isOutro ? "#C2410C" : "#B45309";
-  return (
-    <div className="bg-white border border-[#E7E5E4] rounded-2xl p-4">
-      <div className="flex items-center justify-between mb-3">
-        <span
-          className="text-[11px] font-bold uppercase tracking-wider px-2 py-1 rounded"
-          style={{ color, backgroundColor: `${color}15` }}
-        >
-          {match.label}
-        </span>
-        <span className="text-sm font-bold font-mono" style={{ color }}>
-          {Math.round(match.confidence * 100)}%
-        </span>
-      </div>
-      <p className="text-[15px] font-bold font-mono mb-1">
-        A {fmt(match.aStart)}–{fmt(match.aEnd)}
-      </p>
-      <p className="text-[15px] font-bold font-mono mb-3">
-        B {fmt(match.bStart)}–{fmt(match.bEnd)}
-      </p>
-      <div className="flex items-center gap-2 pt-3 border-t border-[#E7E5E4]">
-        {match.method.map((m, i) => (
-          <span key={i} className="flex items-center gap-1 text-[10px] text-[#78716C] font-mono">
-            {m.startsWith("audio") ? <Music className="w-3 h-3" /> : <Film className="w-3 h-3" />}
-            {m}
-          </span>
-        ))}
       </div>
     </div>
   );
@@ -810,116 +1319,40 @@ function DetectionCard({
   const color = detection.label === "intro" ? "#4D7C0F" : "#C2410C";
   return (
     <div
-      className="bg-white border rounded-2xl p-4"
+      className="bg-white border rounded-xl p-4"
       style={{ borderColor: detection.found ? `${color}40` : "#E7E5E4" }}
     >
       <div className="flex items-center justify-between mb-3">
         <span
-          className="text-[11px] font-bold uppercase tracking-wider px-2 py-1 rounded"
+          className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
           style={{ color, backgroundColor: `${color}15` }}
         >
           {detection.label}
         </span>
         {detection.found ? (
-          <span className="flex items-center gap-1 text-xs font-medium text-[#4D7C0F]">
-            <Check className="w-3.5 h-3.5" />
-            Found · {Math.round(detection.confidence * 100)}%
+          <span className="flex items-center gap-1 text-[11px] font-medium text-[#4D7C0F]">
+            <Check className="w-3 h-3" />
+            {Math.round(detection.confidence * 100)}%
           </span>
         ) : (
-          <span className="flex items-center gap-1 text-xs font-medium text-[#78716C]">
-            <X className="w-3.5 h-3.5" />
+          <span className="flex items-center gap-1 text-[11px] font-medium text-[#78716C]">
+            <X className="w-3 h-3" />
             Not found
           </span>
         )}
       </div>
       {detection.found ? (
         <>
-          <p className="text-[20px] font-bold font-mono mb-2">
+          <p className="text-[18px] font-bold font-mono mb-1">
             {fmt(detection.start)} → {fmt(detection.end)}
           </p>
-          <p className="text-xs text-[#78716C]">
+          <p className="text-[11px] text-[#78716C]">
             Duration: {fmt(detection.end - detection.start)}
           </p>
         </>
       ) : (
-        <p className="text-sm text-[#78716C]">
-          This segment was not found in the video.
-        </p>
+        <p className="text-[13px] text-[#78716C]">This segment was not found in the video.</p>
       )}
-    </div>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="text-[10px] font-medium uppercase tracking-wider text-[#78716C]">{label}</p>
-      <p className="text-lg font-bold mt-0.5">{value}</p>
-    </div>
-  );
-}
-
-function MiniTimeline({ matches, duration }: { matches: MatchItem[]; duration: number }) {
-  return (
-    <div className="space-y-4">
-      {/* Track A */}
-      <div>
-        <div className="flex justify-between text-[10px] text-[#78716C] mb-1">
-          <span className="font-bold">A</span>
-          <span className="font-mono">{fmt(duration)}</span>
-        </div>
-        <div className="relative h-7 bg-[#F5F5F0] rounded-lg overflow-hidden">
-          {matches.map((m) => {
-            const left = (m.aStart / duration) * 100;
-            const width = ((m.aEnd - m.aStart) / duration) * 100;
-            const color = m.isIntro ? "#4D7C0F" : m.isOutro ? "#C2410C" : "#B45309";
-            return (
-              <div
-                key={m.id}
-                className="absolute top-0.5 bottom-0.5 rounded-md flex items-center justify-center"
-                style={{
-                  left: `${left}%`,
-                  width: `${width}%`,
-                  backgroundColor: `${color}30`,
-                  border: `1px solid ${color}`,
-                }}
-              >
-                {(m.isIntro || m.isOutro) && width > 8 && (
-                  <span className="text-[8px] font-bold" style={{ color }}>
-                    {m.isIntro ? "INTRO" : "OUTRO"}
-                  </span>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-      {/* Track B */}
-      <div>
-        <div className="flex justify-between text-[10px] text-[#78716C] mb-1">
-          <span className="font-bold">B</span>
-          <span className="font-mono">{fmt(duration)}</span>
-        </div>
-        <div className="relative h-7 bg-[#F5F5F0] rounded-lg overflow-hidden">
-          {matches.map((m) => {
-            const left = (m.bStart / duration) * 100;
-            const width = ((m.bEnd - m.bStart) / duration) * 100;
-            const color = m.isIntro ? "#4D7C0F" : m.isOutro ? "#C2410C" : "#B45309";
-            return (
-              <div
-                key={m.id}
-                className="absolute top-0.5 bottom-0.5 rounded-md"
-                style={{
-                  left: `${left}%`,
-                  width: `${width}%`,
-                  backgroundColor: `${color}30`,
-                  border: `1px solid ${color}`,
-                }}
-              />
-            );
-          })}
-        </div>
-      </div>
     </div>
   );
 }
@@ -935,16 +1368,14 @@ function ExportSheet({ onClose }: { onClose: () => void }) {
       >
         <div className="w-10 h-1 bg-[#E7E5E4] rounded-full mx-auto mb-5" />
         <h3 className="text-lg font-bold mb-2">Export Signature</h3>
-        <p className="text-sm text-[#78716C] mb-5">
-          Save a JSON file containing the detected intro/outro fingerprints. Use it in Detect mode to find the same intro/outro in other videos.
+        <p className="text-[13px] text-[#78716C] mb-5 leading-relaxed">
+          Save a JSON file with intro/outro fingerprints. Use it in Detect mode to find the same segments in other videos.
         </p>
         <button
           onClick={() => setExported(true)}
           className={cn(
             "w-full py-3.5 rounded-xl font-bold text-sm transition-all",
-            exported
-              ? "bg-[#4D7C0F] text-white"
-              : "bg-[#B45309] text-white active:scale-[0.98]",
+            exported ? "bg-[#4D7C0F] text-white" : "bg-[#B45309] text-white active:scale-[0.98]",
           )}
         >
           {exported ? (
@@ -957,10 +1388,7 @@ function ExportSheet({ onClose }: { onClose: () => void }) {
             </span>
           )}
         </button>
-        <button
-          onClick={onClose}
-          className="w-full py-3 mt-2 text-sm font-medium text-[#78716C]"
-        >
+        <button onClick={onClose} className="w-full py-3 mt-2 text-[13px] font-medium text-[#78716C]">
           Close
         </button>
       </div>
