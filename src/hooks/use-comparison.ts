@@ -88,8 +88,8 @@ export function useComparison() {
           label: "Extracting audio",
           progress: 0.05,
         });
-        audioA = await extractAudio(slotA.file, () => {});
-        audioB = await extractAudio(slotB.file, () => {});
+        audioA = await extractAudio(slotA.file, () => {}, settings.audioSampleRate);
+        audioB = await extractAudio(slotB.file, () => {}, settings.audioSampleRate);
         useStore.getState().setAudioAvailability("A", !!audioA);
         useStore.getState().setAudioAvailability("B", !!audioB);
         if (settings.mode === "audio" && (!audioA || !audioB)) {
@@ -333,7 +333,7 @@ export function useComparison() {
         label: "Extracting audio",
         progress: 0.05,
       });
-      audio = await extractAudio(videoSlot.file!, () => {});
+      audio = await extractAudio(videoSlot.file!, () => {}, settings.audioSampleRate);
       useStore.getState().setAudioAvailability(slotB.file ? "B" : "A", !!audio);
 
       // Extract frames (for video-based segments)

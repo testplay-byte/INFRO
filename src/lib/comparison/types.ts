@@ -116,6 +116,24 @@ export interface ComparisonResult {
   groupCount: number;
   /** Robust signature containing actual fingerprints for export. */
   signature?: SignatureData;
+  /** Per-frame audio similarity curve for detailed visualization. */
+  audioSimilarityCurve?: SimilarityPoint[];
+  /** Per-frame video similarity curve for detailed visualization. */
+  videoSimilarityCurve?: SimilarityPoint[];
+  /** Diagnostics log from the analysis worker. */
+  diagnostics?: string[];
+}
+
+/** A point in the similarity curve — one per analyzed frame. */
+export interface SimilarityPoint {
+  /** Time in video A (seconds). */
+  timeA: number;
+  /** Time in video B (seconds) at the matched offset. */
+  timeB: number;
+  /** Similarity score 0..1. */
+  similarity: number;
+  /** Whether this point is inside a detected match. */
+  inMatch: boolean;
 }
 
 /**

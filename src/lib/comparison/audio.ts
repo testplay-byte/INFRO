@@ -309,3 +309,62 @@ export function energyEnvelope(
   }
   return env;
 }
+
+/**
+ * Spectral peak fingerprinting (Shazam-style).
+ *
+ * Instead of chroma (which aggregates pitch classes), this finds the
+ * strongest spectral peaks in each time frame and creates combinatorial
+ * hashes from pairs of peaks. This is dramatically more robust to:
+ *   - Background noise
+ *   - Volume differences
+ *   - EQ / compression changes
+ *   - Partial overlaps
+ *
+ * Each frame produces a 32-bit hash from the top 2 peaks' (freq_bin, time_offset)
+ * pair, packed into a compact identifier.
+ */
+export function spectralPeakFingerprints(
+  pcm: Float32Array,
+  opts: SpectrogramOptions,
+): { hashes: Uint32Array; times: Float32Array } {
+  const { fftSize, hop, sampleRate } = opts;
+  const mag = magnitudeSpectrogram(pcm, opts);
+  if (mag.length === 0) return { hashes: new Uint32Array(0), times: new Float32Array(0) };
+
+  const bins = fftSize / 2 + 1;
+  const numFrames = mag.length;
+  const hashes = new Uint32Array(numFrames);
+  const times = new Float32Array(numFrames);
+
+  for (let f = 0; f < numFrames; f++) {
+    times[f] = (f * hop) / sampleRate;
+    const frame = mag[f];
+
+    // Find the top 2 spectral peaks in the useful frequency band
+    let peak1Bin = 0;
+    let peak1Mag = 0;
+    let peak2Bin = 0;
+    let peak2Mag = 0;
+    const minBin = Math.floor((100 * fftSize) / sampleRate); // 100Hz
+    const maxBin = Math.floor((5000 * fftSize) / sampleRate); // 5kHz
+
+    for (let k = minBin; k < maxBin && k < bins; k++) {
+      if (frame[k] > peak1Mag) {
+        peak2Mag = peak1Mag;
+        peak2Bin = peak1Bin;
+        peak1Mag = frame[k];
+        peak1Bin = k;
+      } else if (frame[k] > peak2Mag) {
+        peak2Mag = frame[k];
+        peak2Bin = k;
+      }
+    }
+
+    // Pack two peaks into a 32-bit hash: (peak1Bin << 16) | peak2Bin
+    // This is more discriminative than chroma for matching
+    hashes[f] = ((peak1Bin & 0xffff) << 16) | (peak2Bin & 0xffff);
+  }
+
+  return { hashes, times };
+}

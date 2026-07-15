@@ -7,6 +7,7 @@ import { VideoPreview } from "./video-preview";
 import { Timeline } from "./timeline";
 import { MatchList } from "./match-list";
 import { StatsPanel } from "./stats-panel";
+import { AudioAnalysisPanel } from "./audio-analysis-panel";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
@@ -126,6 +127,8 @@ export function ResultsView() {
       <VideoPreview />
 
       <Timeline />
+
+      <AudioAnalysisPanel />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
         <div className="lg:col-span-3">
