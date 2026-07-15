@@ -3,16 +3,11 @@ name: Build Android APK
 on:
   push:
     branches: [main]
-    paths:
-      - "android-app/**"
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: android-app
 
     steps:
       - name: Checkout
@@ -24,16 +19,35 @@ jobs:
           java-version: 17
           distribution: temurin
 
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install web dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build web assets for Android (no basePath)
+        run: BUILD_STATIC=true BUILD_ANDROID=true bun run build
+
+      - name: Copy web assets to Android
+        run: |
+          mkdir -p android-app/app/src/main/assets/app
+          cp -r out/* android-app/app/src/main/assets/app/
+
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
       - name: Generate Gradle Wrapper
+        working-directory: android-app
         run: gradle wrapper --gradle-version 8.7 --distribution-type bin
 
       - name: Grant execute permission for gradlew
+        working-directory: android-app
         run: chmod +x gradlew
 
       - name: Build Debug APK
+        working-directory: android-app
         run: ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Upload APK
@@ -43,9 +57,9 @@ jobs:
           path: android-app/app/build/outputs/apk/debug/*.apk
           retention-days: 30
 
-      - name: Build Release APK (unsigned)
+      - name: Build Release APK (unsigned, signed with debug key)
+        working-directory: android-app
         run: ./gradlew assembleRelease --no-daemon --stacktrace
-        continue-on-error: true
 
       - name: Upload Release APK
         uses: actions/upload-artifact@v4

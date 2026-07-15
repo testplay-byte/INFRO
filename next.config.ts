@@ -7,12 +7,13 @@ import type { NextConfig } from "next";
  * the root "/" route renders as expected.
  */
 const isStaticBuild = process.env.BUILD_STATIC === "true";
+// When building for Android WebView, don't use basePath (local file loading)
+const isAndroidBuild = process.env.BUILD_ANDROID === "true";
 
 const nextConfig: NextConfig = {
   output: isStaticBuild ? "export" : "standalone",
-  // Project site is served from https://<user>.github.io/INFRO/
-  basePath: isStaticBuild ? "/INFRO" : undefined,
-  assetPrefix: isStaticBuild ? "/INFRO/" : undefined,
+  basePath: isStaticBuild && !isAndroidBuild ? "/INFRO" : undefined,
+  assetPrefix: isStaticBuild && !isAndroidBuild ? "/INFRO/" : undefined,
   trailingSlash: isStaticBuild,
   images: {
     unoptimized: true,

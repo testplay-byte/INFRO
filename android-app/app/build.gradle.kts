@@ -11,8 +11,8 @@ android {
         applicationId = "com.infro.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 4
-        versionName = "2.2.0"
+        versionCode = 5
+        versionName = "3.0.0"
     }
 
     // Sign the release APK with the debug key so it's installable without a

@@ -90,12 +90,77 @@ export function AndroidAppPrototype() {
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [prevScreen, setPrevScreen] = useState<Screen>("home");
 
+  // ===== Native bridge (Android WebView) =====
+  const [isNative, setIsNative] = useState(false);
+  const [nativeResult, setNativeResult] = useState<unknown>(null);
+
+  useEffect(() => {
+    // Detect if running inside Android WebView
+    if (typeof window !== "undefined" && (window as unknown as { infroNative?: unknown }).infroNative) {
+      setIsNative(true);
+      // Set up global callbacks for native bridge
+      (window as unknown as Record<string, unknown>).infroCallbacks = {
+        onFileSelected: (slot: string, fileName: string, _type: string) => {
+          if (slot === "videoA") setHasVideoA(true);
+          if (slot === "videoB") setHasVideoB(true);
+          if (slot === "detectVideo") setHasDetectVideo(true);
+          if (slot === "signature") setHasSignature(true);
+        },
+        onProgress: (stage: string, progress: number, detail: string) => {
+          setProgress(progress);
+          setProgressStage(Math.min(6, Math.floor(progress * 6) + 1));
+        },
+        onAnalysisComplete: (result: unknown) => {
+          setNativeResult(result);
+          setScreen("results-compare");
+        },
+        onDetectionComplete: (result: unknown) => {
+          setNativeResult(result);
+          setScreen("results-detect");
+        },
+        onError: (message: string) => {
+          console.error("Native error:", message);
+          setScreen("compare-setup"); // or detect-setup
+        },
+        onExportComplete: () => {
+          // Export done
+        },
+      };
+    }
+  }, []);
+
   const goTo = (s: Screen) => {
     setPrevScreen(screen);
     setScreen(s);
   };
 
   const startAnalysis = (target: Screen) => {
+    // If running natively, call the native bridge instead of simulating
+    if (isNative) {
+      const native = (window as unknown as { infroNative?: { analyze?: (s: string) => void; detect?: (s: string) => void } }).infroNative;
+      if (native) {
+        const settingsJson = JSON.stringify({
+          mode: mode,
+          frameSampleRate: settings.frameSampleRate,
+          audioSampleRate: settings.audioSampleRate,
+          similarityThreshold: settings.similarityThreshold / 100,
+          minMatchDuration: settings.minMatchDuration,
+          maxGap: settings.maxGap,
+          matchDensity: settings.matchDensity / 100,
+        });
+        setScreen(target === "results-compare" ? "compare-progress" : "detect-progress");
+        setProgress(0);
+        setProgressStage(0);
+        if (target === "results-compare") {
+          native.analyze?.(settingsJson);
+        } else {
+          native.detect?.(settingsJson);
+        }
+        return;
+      }
+    }
+
+    // Mock simulation for web browser
     setScreen(target === "results-compare" ? "compare-progress" : "detect-progress");
     setProgress(0);
     setProgressStage(0);
@@ -138,6 +203,7 @@ export function AndroidAppPrototype() {
               onBack={() => goTo("home")}
               onAnalyze={() => startAnalysis("results-compare")}
               onOpenSettings={() => setShowSettings(true)}
+              isNative={isNative}
             />
           )}
 
@@ -152,6 +218,7 @@ export function AndroidAppPrototype() {
               onBack={() => goTo("home")}
               onDetect={() => startAnalysis("results-detect")}
               onOpenSettings={() => setShowSettings(true)}
+              isNative={isNative}
             />
           )}
 
@@ -161,16 +228,21 @@ export function AndroidAppPrototype() {
 
           {screen === "results-compare" && (
             <ResultsScreen
-              matches={SAMPLE_MATCHES} mode={mode}
-              onNew={() => { setHasVideoA(false); setHasVideoB(false); goTo("home"); }}
+              matches={nativeResult && isNative ? ((nativeResult as { matches: typeof SAMPLE_MATCHES }).matches) : SAMPLE_MATCHES}
+              mode={mode}
+              onNew={() => { setHasVideoA(false); setHasVideoB(false); setNativeResult(null); goTo("home"); }}
               onBack={() => goTo("compare-setup")}
+              isNative={isNative}
+              nativeResult={nativeResult}
             />
           )}
 
           {screen === "results-detect" && (
             <DetectResultsScreen
-              onNew={() => { setHasSignature(false); setHasDetectVideo(false); goTo("home"); }}
+              onNew={() => { setHasSignature(false); setHasDetectVideo(false); setNativeResult(null); goTo("home"); }}
               onBack={() => goTo("detect-setup")}
+              isNative={isNative}
+              nativeResult={nativeResult}
             />
           )}
         </motion.div>
@@ -486,14 +558,24 @@ function GeometricShapes() {
 
 function CompareSetupScreen({
   mode, setMode, hasVideoA, hasVideoB, setHasVideoA, setHasVideoB,
-  onBack, onAnalyze, onOpenSettings,
+  onBack, onAnalyze, onOpenSettings, isNative = false,
 }: {
   mode: Mode; setMode: (m: Mode) => void;
   hasVideoA: boolean; hasVideoB: boolean;
   setHasVideoA: (v: boolean) => void; setHasVideoB: (v: boolean) => void;
   onBack: () => void; onAnalyze: () => void; onOpenSettings: () => void;
+  isNative?: boolean;
 }) {
   const canAnalyze = hasVideoA && hasVideoB;
+
+  const pickFile = (slot: "A" | "B") => {
+    if (isNative) {
+      const native = (window as unknown as { infroNative?: { pickFile?: (s: string) => void } }).infroNative;
+      native?.pickFile?.(slot === "A" ? "videoA" : "videoB");
+    }
+    if (slot === "A") setHasVideoA(true);
+    else setHasVideoB(true);
+  };
   const modeInfo: Record<Mode, { icon: React.ReactNode; desc: string }> = {
     audio: { icon: <Music className="w-3.5 h-3.5" />, desc: "Audio fingerprints only — fastest, best for reused music" },
     video: { icon: <Film className="w-3.5 h-3.5" />, desc: "Visual frame hashes — best when audio differs" },
@@ -568,8 +650,8 @@ function CompareSetupScreen({
       </motion.div>
 
       {/* Video pickers */}
-      <VideoPicker label="Video A" selected={hasVideoA} onSelect={() => setHasVideoA(true)} fileName="episode_01.mp4" duration="24:30" />
-      <VideoPicker label="Video B" selected={hasVideoB} onSelect={() => setHasVideoB(true)} fileName="episode_02.mp4" duration="23:45" />
+      <VideoPicker label="Video A" selected={hasVideoA} onSelect={() => pickFile("A")} fileName="episode_01.mp4" duration="24:30" />
+      <VideoPicker label="Video B" selected={hasVideoB} onSelect={() => pickFile("B")} fileName="episode_02.mp4" duration="23:45" />
 
       <div className="mt-auto pt-6">
         <motion.button
@@ -705,13 +787,30 @@ function SettingSlider({
 
 function DetectSetupScreen({
   hasSignature, hasDetectVideo, setHasSignature, setHasDetectVideo,
-  onBack, onDetect, onOpenSettings,
+  onBack, onDetect, onOpenSettings, isNative = false,
 }: {
   hasSignature: boolean; hasDetectVideo: boolean;
   setHasSignature: (v: boolean) => void; setHasDetectVideo: (v: boolean) => void;
   onBack: () => void; onDetect: () => void; onOpenSettings: () => void;
+  isNative?: boolean;
 }) {
   const canDetect = hasSignature && hasDetectVideo;
+
+  const pickSignature = () => {
+    if (isNative) {
+      const native = (window as unknown as { infroNative?: { pickFile?: (s: string) => void } }).infroNative;
+      native?.pickFile?.("signature");
+    }
+    setHasSignature(true);
+  };
+
+  const pickVideo = () => {
+    if (isNative) {
+      const native = (window as unknown as { infroNative?: { pickFile?: (s: string) => void } }).infroNative;
+      native?.pickFile?.("detectVideo");
+    }
+    setHasDetectVideo(true);
+  };
   return (
     <div className="flex flex-col min-h-[calc(800px-36px)] px-6 pt-6 pb-8">
       <motion.div
@@ -749,7 +848,7 @@ function DetectSetupScreen({
       <div className="mb-4">
         <p className="text-[11px] font-bold text-[#78716C] tracking-wider mb-2">SIGNATURE FILE</p>
         <button
-          onClick={() => setHasSignature(true)}
+          onClick={pickSignature}
           className={cn(
             "w-full rounded-xl border-2 border-dashed transition-all flex items-center gap-3 p-4",
             hasSignature ? "border-[#4D7C0F]/40 bg-[#4D7C0F]/5" : "border-[#E7E5E4] bg-white",
@@ -773,7 +872,7 @@ function DetectSetupScreen({
           </div>
         </button>
       </div>
-      <VideoPicker label="Video" selected={hasDetectVideo} onSelect={() => setHasDetectVideo(true)} fileName="episode_03.mp4" duration="25:12" />
+      <VideoPicker label="Video" selected={hasDetectVideo} onSelect={pickVideo} fileName="episode_03.mp4" duration="25:12" />
       <div className="mt-auto pt-6">
         <motion.button
           whileTap={canDetect ? { scale: 0.98 } : {}}
@@ -914,9 +1013,10 @@ function ProgressScreen({
 // ===================== RESULTS (COMPARE) — redesigned =====================
 
 function ResultsScreen({
-  matches, mode, onNew, onBack,
+  matches, mode, onNew, onBack, isNative = false, nativeResult = null,
 }: {
   matches: MatchItem[]; mode: Mode; onNew: () => void; onBack: () => void;
+  isNative?: boolean; nativeResult?: unknown;
 }) {
   const [playing, setPlaying] = useState(false);
   const [linked, setLinked] = useState(true);
@@ -1138,7 +1238,13 @@ function ResultsScreen({
       </div>
 
       <AnimatePresence>
-        {showExportSheet && <ExportSheet onClose={() => setShowExportSheet(false)} />}
+        {showExportSheet && (
+          <ExportSheet
+            onClose={() => setShowExportSheet(false)}
+            isNative={isNative}
+            nativeResult={nativeResult}
+          />
+        )}
       </AnimatePresence>
     </div>
   );
@@ -1341,16 +1447,20 @@ function MatchCard({ match }: { match: MatchItem }) {
 // ===================== RESULTS (DETECT) — with video player + jump buttons =====================
 
 function DetectResultsScreen({
-  onNew, onBack,
+  onNew, onBack, isNative = false, nativeResult = null,
 }: {
   onNew: () => void; onBack: () => void;
+  isNative?: boolean; nativeResult?: unknown;
 }) {
   const [time, setTime] = useState(5.0);
   const [playing, setPlaying] = useState(false);
-  const detections = [
-    { label: "intro", found: true, start: 2.1, end: 14.6, confidence: 0.92, method: ["audio-chroma"] },
-    { label: "outro", found: true, start: 171.3, end: 185.0, confidence: 0.88, method: ["audio-chroma"] },
-  ];
+  // Use native result if available, otherwise mock data
+  const detections = isNative && nativeResult
+    ? (nativeResult as { detections: Array<{ label: string; found: boolean; start: number; end: number; confidence: number; method: string[] }> }).detections
+    : [
+      { label: "intro", found: true, start: 2.1, end: 14.6, confidence: 0.92, method: ["audio-chroma"] },
+      { label: "outro", found: true, start: 171.3, end: 185.0, confidence: 0.88, method: ["audio-chroma"] },
+    ];
   const vidDuration = 200;
 
   const seekTo = (t: number) => setTime(t);
@@ -1450,8 +1560,21 @@ function DetectResultsScreen({
   );
 }
 
-function ExportSheet({ onClose }: { onClose: () => void }) {
+function ExportSheet({ onClose, isNative = false, nativeResult = null }: { onClose: () => void; isNative?: boolean; nativeResult?: unknown }) {
   const [exported, setExported] = useState(false);
+
+  const handleExport = () => {
+    if (isNative) {
+      const native = (window as unknown as { infroNative?: { exportSignature?: (json: string) => void } }).infroNative;
+      // Extract signature from native result
+      const result = nativeResult as { signature?: unknown };
+      if (native?.exportSignature && result?.signature) {
+        native.exportSignature(JSON.stringify(result.signature));
+      }
+    }
+    setExported(true);
+  };
+
   return (
     <>
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-black/40 z-50" />
@@ -1467,7 +1590,7 @@ function ExportSheet({ onClose }: { onClose: () => void }) {
         </p>
         <motion.button
           whileTap={{ scale: 0.98 }}
-          onClick={() => setExported(true)}
+          onClick={handleExport}
           className={cn("w-full py-3.5 rounded-xl font-bold text-sm transition-all", exported ? "bg-[#4D7C0F] text-white" : "bg-[#B45309] text-white")}
         >
           {exported ? (
