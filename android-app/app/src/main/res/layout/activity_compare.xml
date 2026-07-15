@@ -1,149 +1,210 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/bg"
-    android:fillViewport="true">
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:paddingTop="32dp">
 
+    <!-- Top bar -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="28dp">
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="24dp">
+
+        <Button
+            android:id="@+id/btnBack"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:text="← Back"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"
+            android:backgroundTint="@color/card_border"
+            android:textAllCaps="false"
+            android:paddingHorizontal="12dp"
+            android:minWidth="0dp" />
 
         <TextView
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:text="Compare Videos"
-            android:textSize="28sp"
+            android:textSize="17sp"
             android:textStyle="bold"
             android:textColor="@color/text_primary"
-            android:layout_marginBottom="24dp" />
-
-        <!-- Mode selector -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="COMPARISON MODE"
-            android:textSize="11sp"
-            android:textStyle="bold"
-            android:textColor="@color/text_secondary"
-            android:letterSpacing="0.1"
-            android:layout_marginBottom="10dp" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="28dp">
-
-            <Button
-                android:id="@+id/btnAudio"
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_weight="1"
-                android:text="Audio"
-                android:textAllCaps="false"
-                android:textSize="13sp"
-                android:layout_marginEnd="6dp" />
-
-            <Button
-                android:id="@+id/btnVideo"
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_weight="1"
-                android:text="Video"
-                android:textAllCaps="false"
-                android:textSize="13sp"
-                android:layout_marginStart="6dp"
-                android:layout_marginEnd="6dp" />
-
-            <Button
-                android:id="@+id/btnCombined"
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_weight="1"
-                android:text="Combined"
-                android:textAllCaps="false"
-                android:textSize="13sp"
-                android:layout_marginStart="6dp" />
-        </LinearLayout>
-
-        <!-- Video A -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="VIDEO A"
-            android:textSize="11sp"
-            android:textStyle="bold"
-            android:textColor="@color/text_secondary"
-            android:letterSpacing="0.1"
-            android:layout_marginBottom="10dp" />
+            android:gravity="center" />
 
         <Button
-            android:id="@+id/btnVideoA"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:text="Select video A"
-            android:backgroundTint="@color/card"
-            android:textColor="@color/text_primary"
-            android:textAllCaps="false"
-            android:textSize="14sp"
-            android:layout_marginBottom="24dp" />
-
-        <!-- Video B -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="VIDEO B"
-            android:textSize="11sp"
-            android:textStyle="bold"
-            android:textColor="@color/text_secondary"
-            android:letterSpacing="0.1"
-            android:layout_marginBottom="10dp" />
-
-        <Button
-            android:id="@+id/btnVideoB"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:text="Select video B"
-            android:backgroundTint="@color/card"
-            android:textColor="@color/text_primary"
-            android:textAllCaps="false"
-            android:textSize="14sp"
-            android:layout_marginBottom="28dp" />
-
-        <!-- Analyze -->
-        <Button
-            android:id="@+id/btnAnalyze"
-            android:layout_width="match_parent"
-            android:layout_height="60dp"
-            android:text="Analyze Similarity"
-            android:backgroundTint="@color/primary"
-            android:textColor="@android:color/white"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:textAllCaps="false"
-            android:enabled="false"
-            android:layout_marginBottom="24dp" />
-
-        <!-- Progress -->
-        <ProgressBar
-            android:id="@+id/progressBar"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:visibility="gone"
-            android:indeterminateTint="@color/primary"
-            android:layout_marginBottom="12dp" />
-
-        <TextView
-            android:id="@+id/tvInfo"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="13sp"
-            android:textColor="@color/text_secondary"
-            android:fontFamily="monospace"
-            android:visibility="gone" />
-
+            android:id="@+id/btnSettings"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:text="⚙"
+            android:textSize="18sp"
+            android:backgroundTint="@color/card_border"
+            android:padding="0dp"
+            android:minWidth="0dp" />
     </LinearLayout>
-</ScrollView>
+
+    <!-- Mode selector — segmented control -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="@color/segment_bg"
+        android:padding="4dp"
+        android:layout_marginBottom="12dp">
+
+        <Button
+            android:id="@+id/btnAudio"
+            android:layout_width="0dp"
+            android:layout_height="36dp"
+            android:layout_weight="1"
+            android:text="Audio"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:textAllCaps="false"
+            android:backgroundTint="@color/card"
+            android:textColor="@color/text_secondary"
+            android:layout_marginEnd="4dp" />
+
+        <Button
+            android:id="@+id/btnVideo"
+            android:layout_width="0dp"
+            android:layout_height="36dp"
+            android:layout_weight="1"
+            android:text="Video"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:textAllCaps="false"
+            android:backgroundTint="@color/card"
+            android:textColor="@color/text_secondary"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp" />
+
+        <Button
+            android:id="@+id/btnCombined"
+            android:layout_width="0dp"
+            android:layout_height="36dp"
+            android:layout_weight="1"
+            android:text="Combined"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:textAllCaps="false"
+            android:backgroundTint="@color/card"
+            android:textColor="@color/text_secondary"
+            android:layout_marginStart="4dp" />
+    </LinearLayout>
+
+    <!-- Mode description -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="@color/mode_hint_bg"
+        android:padding="12dp"
+        android:layout_marginBottom="24dp">
+
+        <TextView
+            android:id="@+id/tvModeIcon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:textColor="@color/primary"
+            android:layout_marginEnd="8dp" />
+
+        <TextView
+            android:id="@+id/tvModeDesc"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="12sp"
+            android:textColor="@color/text_secondary" />
+    </LinearLayout>
+
+    <!-- Video A -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="VIDEO A"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        android:textColor="@color/text_secondary"
+        android:letterSpacing="0.1"
+        android:layout_marginBottom="8dp" />
+
+    <Button
+        android:id="@+id/btnVideoA"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:text="Tap to select"
+        android:textSize="14sp"
+        android:textAllCaps="false"
+        android:backgroundTint="@color/card"
+        android:textColor="@color/text_primary"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Video B -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="VIDEO B"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        android:textColor="@color/text_secondary"
+        android:letterSpacing="0.1"
+        android:layout_marginBottom="8dp" />
+
+    <Button
+        android:id="@+id/btnVideoB"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:text="Tap to select"
+        android:textSize="14sp"
+        android:textAllCaps="false"
+        android:backgroundTint="@color/card"
+        android:textColor="@color/text_primary"
+        android:layout_marginBottom="24dp" />
+
+    <!-- Spacer -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <!-- Analyze button -->
+    <Button
+        android:id="@+id/btnAnalyze"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:text="Analyze Similarity"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:textAllCaps="false"
+        android:backgroundTint="@color/border"
+        android:textColor="@color/text_secondary"
+        android:enabled="false"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Progress -->
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:indeterminateTint="@color/primary"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:id="@+id/tvInfo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="13sp"
+        android:textColor="@color/text_secondary"
+        android:fontFamily="monospace"
+        android:visibility="gone" />
+
+</LinearLayout>

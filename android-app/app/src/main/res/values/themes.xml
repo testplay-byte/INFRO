@@ -1,8 +1,20 @@
 <resources>
     <style name="Theme.Infro" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="colorPrimary">#B45309</item>
-        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorOnPrimary">@color/white</item>
         <item name="colorPrimaryContainer">#FDE68A</item>
-        <item name="android:statusBarColor">#B45309</item>
+        <item name="android:statusBarColor">@color/primary</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+
+    <style name="SettingsSheet" parent="Theme.Material3.DayNight.Dialog">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowIsFloating">true</item>
+    </style>
+
+    <style name="SheetAnimation">
+        <item name="android:windowEnterAnimation">@anim/slide_up</item>
+        <item name="android:windowExitAnimation">@anim/slide_down</item>
     </style>
 </resources>

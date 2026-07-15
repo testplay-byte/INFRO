@@ -1,143 +1,201 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bg"
-    android:fillViewport="true">
+    android:background="@color/bg">
 
+    <!-- Animated shapes container (full-screen, behind content) -->
+    <LinearLayout
+        android:id="@+id/shapesContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical" />
+
+    <!-- Main content -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:orientation="vertical"
-        android:padding="28dp">
+        android:padding="28dp"
+        android:paddingTop="48dp">
 
-        <!-- Header -->
+        <!-- Logo — top center -->
         <LinearLayout
-            android:layout_width="match_parent"
+            android:id="@+id/logoContainer"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
             android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginBottom="40dp">
+            android:gravity="center_vertical">
 
             <View
-                android:layout_width="44dp"
-                android:layout_height="44dp"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
                 android:background="@drawable/logo_bg"
-                android:layout_marginEnd="14dp" />
+                android:layout_marginEnd="10dp" />
 
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Infro"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary" />
+        </LinearLayout>
+
+        <!-- Center content — flex grow -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Find intros,\noutros &amp; matches"
+                android:textSize="28sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                android:lineSpacingExtra="2dp"
+                android:gravity="center"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:id="@+id/tvSubtitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Compare two videos or detect from a signature."
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"
+                android:layout_marginBottom="32dp" />
+
+            <!-- Compare card -->
             <LinearLayout
-                android:layout_width="wrap_content"
+                android:id="@+id/cardCompare"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:orientation="horizontal"
+                android:background="@drawable/card_bg"
+                android:padding="16dp"
+                android:layout_marginBottom="12dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?android:attr/selectableItemBackground">
+
+                <View
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:background="@drawable/icon_compare_bg"
+                    android:layout_marginEnd="16dp" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Compare videos"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_primary" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Find shared segments between two videos"
+                        android:textSize="12sp"
+                        android:textColor="@color/text_secondary"
+                        android:layout_marginTop="2dp" />
+                </LinearLayout>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Infro"
-                    android:textSize="22sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/text_primary" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Intro &amp; Outro Detector"
-                    android:textSize="12sp"
-                    android:textColor="@color/text_secondary" />
+                    android:text="›"
+                    android:textSize="24sp"
+                    android:textColor="@color/border"
+                    android:layout_gravity="center_vertical" />
             </LinearLayout>
+
+            <!-- Detect card -->
+            <LinearLayout
+                android:id="@+id/cardDetect"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:background="@drawable/card_bg"
+                android:padding="16dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?android:attr/selectableItemBackground">
+
+                <View
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:background="@drawable/icon_detect_bg"
+                    android:layout_marginEnd="16dp" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Detect from signature"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_primary" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Find intro/outro in a new video"
+                        android:textSize="12sp"
+                        android:textColor="@color/text_secondary"
+                        android:layout_marginTop="2dp" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="›"
+                    android:textSize="24sp"
+                    android:textColor="@color/border"
+                    android:layout_gravity="center_vertical" />
+            </LinearLayout>
+
         </LinearLayout>
 
-        <!-- Title -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="What do you want to do?"
-            android:textSize="32sp"
-            android:textStyle="bold"
-            android:textColor="@color/text_primary"
-            android:layout_marginBottom="8dp" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Compare two videos to find shared segments, or detect intro/outro in a new video using a saved signature."
-            android:textSize="15sp"
-            android:textColor="@color/text_secondary"
-            android:lineSpacingExtra="5dp"
-            android:layout_marginBottom="40dp" />
-
-        <!-- Compare card -->
+        <!-- Bottom privacy note -->
         <LinearLayout
-            android:id="@+id/cardCompare"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="@drawable/card_bg"
-            android:padding="24dp"
-            android:layout_marginBottom="16dp"
-            android:clickable="true"
-            android:focusable="true"
-            android:foreground="?android:attr/selectableItemBackground">
+            android:layout_gravity="center_horizontal"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
 
             <View
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:background="@drawable/logo_bg"
-                android:layout_marginBottom="16dp" />
+                android:layout_width="12dp"
+                android:layout_height="12dp"
+                android:background="@drawable/shield_icon"
+                android:layout_marginEnd="6dp" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Compare two videos"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                android:textColor="@color/text_primary"
-                android:layout_marginBottom="6dp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Upload two videos and find matching intro, outro, and shared clips. Export a signature for later use."
-                android:textSize="14sp"
-                android:textColor="@color/text_secondary"
-                android:lineSpacingExtra="4dp" />
-        </LinearLayout>
-
-        <!-- Detect card -->
-        <LinearLayout
-            android:id="@+id/cardDetect"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="@drawable/card_bg"
-            android:padding="24dp"
-            android:clickable="true"
-            android:focusable="true"
-            android:foreground="?android:attr/selectableItemBackground">
-
-            <View
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:background="@drawable/detect_bg"
-                android:layout_marginBottom="16dp" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Detect from signature"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                android:textColor="@color/text_primary"
-                android:layout_marginBottom="6dp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Upload a signature JSON and a new video. Infro will find where the intro and outro appear."
-                android:textSize="14sp"
-                android:textColor="@color/text_secondary"
-                android:lineSpacingExtra="4dp" />
+                android:text="All processing happens on your device"
+                android:textSize="11sp"
+                android:textColor="@color/text_secondary" />
         </LinearLayout>
 
     </LinearLayout>
-</ScrollView>
+</FrameLayout>

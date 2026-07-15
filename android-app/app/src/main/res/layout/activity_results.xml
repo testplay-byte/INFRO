@@ -9,28 +9,68 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="24dp">
+        android:padding="16dp"
+        android:paddingTop="24dp">
+
+        <!-- Floating top nav bar -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="@drawable/nav_bar_bg"
+            android:padding="8dp"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="20dp">
+
+            <Button
+                android:id="@+id/btnBack"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:text="← Back"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                android:backgroundTint="@color/card_border"
+                android:textAllCaps="false"
+                android:paddingHorizontal="12dp"
+                android:minWidth="0dp" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Results"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                android:gravity="center" />
+
+            <Button
+                android:id="@+id/btnExport"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:text="Export"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="@color/white"
+                android:backgroundTint="@color/primary"
+                android:textAllCaps="false"
+                android:paddingHorizontal="12dp"
+                android:minWidth="0dp" />
+        </LinearLayout>
 
         <!-- Banner -->
         <TextView
             android:id="@+id/tvBanner"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="14sp"
+            android:textSize="13sp"
             android:textColor="@color/text_primary"
             android:fontFamily="monospace"
             android:lineSpacingExtra="4dp"
             android:background="@drawable/card_bg"
             android:padding="16dp"
             android:layout_marginBottom="16dp" />
-
-        <!-- Video player -->
-        <androidx.media3.ui.PlayerView
-            android:id="@+id/playerView"
-            android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:layout_marginBottom="16dp"
-            android:visibility="gone" />
 
         <!-- Timeline -->
         <TextView
@@ -69,7 +109,7 @@
             android:textColor="@color/text_primary"
             android:fontFamily="monospace"
             android:lineSpacingExtra="4dp"
-            android:background="@drawable/card_bg"
+            android:background="@drawable/stats_bg"
             android:padding="16dp"
             android:layout_marginBottom="16dp" />
 
@@ -91,37 +131,17 @@
             android:nestedScrollingEnabled="false"
             android:layout_marginBottom="16dp" />
 
-        <!-- Actions -->
-        <LinearLayout
+        <Button
+            android:id="@+id/btnNew"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="16dp">
-
-            <Button
-                android:id="@+id/btnExport"
-                android:layout_width="0dp"
-                android:layout_height="52dp"
-                android:layout_weight="1"
-                android:text="Export signature"
-                android:backgroundTint="@color/card"
-                android:textColor="@color/text_primary"
-                android:textAllCaps="false"
-                android:textSize="14sp"
-                android:layout_marginEnd="8dp" />
-
-            <Button
-                android:id="@+id/btnNew"
-                android:layout_width="0dp"
-                android:layout_height="52dp"
-                android:layout_weight="1"
-                android:text="New analysis"
-                android:backgroundTint="@color/primary"
-                android:textColor="@android:color/white"
-                android:textAllCaps="false"
-                android:textSize="14sp"
-                android:layout_marginStart="8dp" />
-        </LinearLayout>
+            android:layout_height="48dp"
+            android:text="New Analysis"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textAllCaps="false"
+            android:backgroundTint="@color/primary"
+            android:textColor="@color/white"
+            android:layout_marginBottom="16dp" />
 
     </LinearLayout>
 </ScrollView>

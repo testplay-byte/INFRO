@@ -4,9 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
-import android.widget.Button
-import android.widget.ProgressBar
-import android.widget.TextView
+import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -19,29 +17,37 @@ import kotlinx.coroutines.launch
 class DetectActivity : AppCompatActivity() {
 
     private var signatureUri: Uri? = null
-    private var videoUri: Uri? = null
     private var signatureData: SignatureData? = null
-    private var videoName: String = ""
-    private var settings = AnalysisSettings()
+    private var videoUri: Uri? = null
+    private var videoFileName: String = ""
 
-    private lateinit var btnSig: Button
+    private lateinit var btnBack: Button
+    private lateinit var btnSettings: Button
+    private lateinit var btnSignature: Button
     private lateinit var btnVideo: Button
     private lateinit var btnDetect: Button
-    private lateinit var tvInfo: TextView
     private lateinit var progressBar: ProgressBar
+    private lateinit var tvInfo: TextView
 
-    private val pickSig = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+    private var settings: AnalysisSettings = ResultHolder.settings
+
+    private val pickSignature = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let {
             signatureUri = it
+            val name = getFileName(it) ?: "signature.json"
             try {
-                val json = contentResolver.openInputStream(it)?.bufferedReader()?.use { r -> r.readText() }
+                val json = contentResolver.openInputStream(it)?.bufferedReader().use { it?.readText() } ?: ""
                 signatureData = Gson().fromJson(json, SignatureData::class.java)
-                val segCount = signatureData?.segments?.size ?: 0
-                btnSig.text = "Signature: $segCount segments"
-                updateButton()
+                btnSignature.text = name
+                btnSignature.setBackgroundColor(getColor(R.color.sage_hint))
+                tvInfo.visibility = View.GONE
+                tvInfo.text = ""
+                updateDetectButton()
             } catch (e: Exception) {
-                tvInfo.text = "Invalid signature: ${e.message}"
+                signatureData = null
                 tvInfo.visibility = View.VISIBLE
+                tvInfo.text = "Failed to read signature: ${e.message ?: "Unknown error"}"
+                updateDetectButton()
             }
         }
     }
@@ -49,9 +55,10 @@ class DetectActivity : AppCompatActivity() {
     private val pickVideo = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let {
             videoUri = it
-            videoName = getFileName(it) ?: "video"
-            btnVideo.text = "Video: $videoName"
-            updateButton()
+            videoFileName = getFileName(it) ?: "video"
+            btnVideo.text = videoFileName
+            btnVideo.setBackgroundColor(getColor(R.color.sage_hint))
+            updateDetectButton()
         }
     }
 
@@ -59,19 +66,53 @@ class DetectActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_detect)
 
-        btnSig = findViewById(R.id.btnSignature)
+        btnBack = findViewById(R.id.btnBack)
+        btnSettings = findViewById(R.id.btnSettings)
+        btnSignature = findViewById(R.id.btnSignature)
         btnVideo = findViewById(R.id.btnVideo)
         btnDetect = findViewById(R.id.btnDetect)
-        tvInfo = findViewById(R.id.tvInfo)
         progressBar = findViewById(R.id.progressBar)
+        tvInfo = findViewById(R.id.tvInfo)
 
-        btnSig.setOnClickListener { pickSig.launch("application/json") }
+        btnBack.setOnClickListener { finish() }
+        btnSettings.setOnClickListener {
+            val sheet = SettingsBottomSheet(this, settings) { newSettings ->
+                settings = newSettings
+                ResultHolder.settings = newSettings
+            }
+            sheet.show()
+        }
+
+        btnSignature.setOnClickListener { pickSignature.launch("application/json") }
         btnVideo.setOnClickListener { pickVideo.launch("video/*") }
         btnDetect.setOnClickListener { detect() }
+
+        updateDetectButton()
+
+        // Staggered entrance — fade in + translate Y, just like CompareActivity
+        lifecycleScope.launch {
+            val views = listOf(btnBack, btnSignature, btnVideo, btnDetect)
+            for (v in views) {
+                v.alpha = 0f
+                v.translationY = 20f
+            }
+            for (v in views) {
+                v.animate().alpha(1f).translationY(0f).setDuration(300).start()
+                try { Thread.sleep(50) } catch (_: Exception) {}
+            }
+        }
     }
 
-    private fun updateButton() {
-        btnDetect.isEnabled = signatureData != null && videoUri != null
+    private fun updateDetectButton() {
+        val ready = signatureData != null && videoUri != null
+        btnDetect.isEnabled = ready
+        if (ready) {
+            btnDetect.setBackgroundColor(getColor(R.color.primary))
+            btnDetect.setTextColor(getColor(R.color.white))
+        } else {
+            btnDetect.setBackgroundColor(getColor(R.color.border))
+            btnDetect.setTextColor(getColor(R.color.text_secondary))
+        }
     }
 
     private fun detect() {
@@ -81,27 +122,39 @@ class DetectActivity : AppCompatActivity() {
         progressBar.visibility = View.VISIBLE
         tvInfo.visibility = View.VISIBLE
         btnDetect.isEnabled = false
-        tvInfo.text = "Detecting..."
+        tvInfo.text = "Starting detection..."
+
+        ResultHolder.detectVideoUri = video
+        ResultHolder.detectFileName = videoFileName
+        ResultHolder.signatureData = sig
+        ResultHolder.settings = settings
 
         lifecycleScope.launch {
             try {
                 val result = AnalysisEngine.detect(
-                    this@DetectActivity, sig, video, videoName, settings
+                    this@DetectActivity, sig, video, videoFileName, settings
                 ) { stage, progress, detail ->
                     tvInfo.text = "$detail (${(progress * 100).toInt()}%)"
                 }
 
+                if (result.detections.isEmpty()) {
+                    tvInfo.text = "No segments detected. Try different settings or another video."
+                    return@launch
+                }
+
                 ResultHolder.detectionResult = result
                 ResultHolder.resultType = ResultHolder.Type.DETECT
-                ResultHolder.resultJson = Gson().toJson(sig)
                 startActivity(Intent(this@DetectActivity, ResultsActivity::class.java))
                 finish()
 
+            } catch (e: OutOfMemoryError) {
+                tvInfo.text = "Out of memory. Try a shorter video."
             } catch (e: Exception) {
-                tvInfo.text = "Error: ${e.message}"
+                tvInfo.text = "Error: ${e.message ?: "Unknown error"}"
             } finally {
                 progressBar.visibility = View.GONE
                 btnDetect.isEnabled = true
+                updateDetectButton()
             }
         }
     }

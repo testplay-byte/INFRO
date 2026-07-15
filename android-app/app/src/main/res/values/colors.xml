@@ -5,6 +5,10 @@
     <color name="copper">#C2410C</color>
     <color name="bg">#FAFAF7</color>
     <color name="card">#FFFFFF</color>
+    <color name="card_border">#F5F5F0</color>
+    <color name="segment_bg">#F5F5F0</color>
+    <color name="mode_hint_bg">#1AB45309</color>
+    <color name="sage_hint">#1A4D7C0F</color>
     <color name="white">#FFFFFF</color>
     <color name="text_primary">#1C1917</color>
     <color name="text_secondary">#78716C</color>

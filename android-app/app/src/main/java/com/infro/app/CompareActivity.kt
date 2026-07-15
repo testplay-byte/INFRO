@@ -4,16 +4,12 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
-import android.widget.Button
-import android.widget.ProgressBar
-import android.widget.TextView
+import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.infro.app.matching.AnalysisEngine
 import com.infro.app.model.AnalysisSettings
-import com.infro.app.model.ComparisonResult
-import com.google.gson.Gson
 import kotlinx.coroutines.launch
 
 class CompareActivity : AppCompatActivity() {
@@ -23,22 +19,27 @@ class CompareActivity : AppCompatActivity() {
     private var nameA: String = ""
     private var nameB: String = ""
 
-    private lateinit var btnA: Button
-    private lateinit var btnB: Button
-    private lateinit var btnAnalyze: Button
-    private lateinit var tvInfo: TextView
-    private lateinit var progressBar: ProgressBar
     private lateinit var btnAudio: Button
     private lateinit var btnVideo: Button
     private lateinit var btnCombined: Button
+    private lateinit var btnVideoA: Button
+    private lateinit var btnVideoB: Button
+    private lateinit var btnAnalyze: Button
+    private lateinit var btnBack: Button
+    private lateinit var btnSettings: Button
+    private lateinit var tvModeDesc: TextView
+    private lateinit var tvModeIcon: TextView
+    private lateinit var progressBar: ProgressBar
+    private lateinit var tvInfo: TextView
 
-    private var settings = AnalysisSettings()
+    private var settings = ResultHolder.settings
 
     private val pickA = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let {
             uriA = it
             nameA = getFileName(it) ?: "video_a"
-            btnA.text = "Video A: $nameA"
+            btnVideoA.text = nameA
+            btnVideoA.setBackgroundColor(getColor(R.color.sage_hint))
             updateAnalyzeButton()
         }
     }
@@ -47,7 +48,8 @@ class CompareActivity : AppCompatActivity() {
         uri?.let {
             uriB = it
             nameB = getFileName(it) ?: "video_b"
-            btnB.text = "Video B: $nameB"
+            btnVideoB.text = nameB
+            btnVideoB.setBackgroundColor(getColor(R.color.sage_hint))
             updateAnalyzeButton()
         }
     }
@@ -56,55 +58,106 @@ class CompareActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_compare)
 
-        btnA = findViewById(R.id.btnVideoA)
-        btnB = findViewById(R.id.btnVideoB)
-        btnAnalyze = findViewById(R.id.btnAnalyze)
-        tvInfo = findViewById(R.id.tvInfo)
-        progressBar = findViewById(R.id.progressBar)
+        btnBack = findViewById(R.id.btnBack)
+        btnSettings = findViewById(R.id.btnSettings)
         btnAudio = findViewById(R.id.btnAudio)
         btnVideo = findViewById(R.id.btnVideo)
         btnCombined = findViewById(R.id.btnCombined)
+        btnVideoA = findViewById(R.id.btnVideoA)
+        btnVideoB = findViewById(R.id.btnVideoB)
+        btnAnalyze = findViewById(R.id.btnAnalyze)
+        tvModeDesc = findViewById(R.id.tvModeDesc)
+        tvModeIcon = findViewById(R.id.tvModeIcon)
+        progressBar = findViewById(R.id.progressBar)
+        tvInfo = findViewById(R.id.tvInfo)
 
-        btnA.setOnClickListener { pickA.launch("video/*") }
-        btnB.setOnClickListener { pickB.launch("video/*") }
-        btnAnalyze.setOnClickListener { analyze() }
+        btnBack.setOnClickListener { finish() }
+        btnSettings.setOnClickListener {
+            val sheet = SettingsBottomSheet(this, settings) { newSettings ->
+                settings = newSettings
+                ResultHolder.settings = newSettings
+            }
+            sheet.show()
+        }
 
         btnAudio.setOnClickListener { setMode("audio") }
         btnVideo.setOnClickListener { setMode("video") }
         btnCombined.setOnClickListener { setMode("combined") }
-        setMode("combined")
+        setMode(settings.mode)
+
+        btnVideoA.setOnClickListener { pickA.launch("video/*") }
+        btnVideoB.setOnClickListener { pickB.launch("video/*") }
+        btnAnalyze.setOnClickListener { analyze() }
+
+        // Staggered entrance
+        lifecycleScope.launch {
+            val views = listOf(btnBack, btnAudio, btnVideo, btnCombined, tvModeDesc, btnVideoA, btnVideoB, btnAnalyze)
+            for (v in views) {
+                v.alpha = 0f
+                v.translationY = 20f
+            }
+            for (v in views) {
+                v.animate().alpha(1f).translationY(0f).setDuration(300).start()
+                try { Thread.sleep(50) } catch (_: Exception) {}
+            }
+        }
     }
 
     private fun setMode(mode: String) {
         settings.mode = mode
-        val active = listOf(R.color.primary, R.color.primary, R.color.primary)
-        val passive = listOf(R.color.card, R.color.card, R.color.card)
-        btnAudio.backgroundTintList = android.content.res.ColorStateList.valueOf(
-            if (mode == "audio") getColor(R.color.primary) else getColor(R.color.card))
-        btnVideo.backgroundTintList = android.content.res.ColorStateList.valueOf(
-            if (mode == "video") getColor(R.color.primary) else getColor(R.color.card))
-        btnCombined.backgroundTintList = android.content.res.ColorStateList.valueOf(
-            if (mode == "combined") getColor(R.color.primary) else getColor(R.color.card))
-        btnAudio.setTextColor(if (mode == "audio") getColor(R.color.white) else getColor(R.color.text_primary))
-        btnVideo.setTextColor(if (mode == "video") getColor(R.color.white) else getColor(R.color.text_primary))
-        btnCombined.setTextColor(if (mode == "combined") getColor(R.color.white) else getColor(R.color.text_primary))
+        val activeBg = getColor(R.color.primary)
+        val inactiveBg = getColor(R.color.card)
+        val activeText = getColor(R.color.white)
+        val inactiveText = getColor(R.color.text_primary)
+
+        btnAudio.setBackgroundColor(if (mode == "audio") activeBg else inactiveBg)
+        btnAudio.setTextColor(if (mode == "audio") activeText else inactiveText)
+        btnVideo.setBackgroundColor(if (mode == "video") activeBg else inactiveBg)
+        btnVideo.setTextColor(if (mode == "video") activeText else inactiveText)
+        btnCombined.setBackgroundColor(if (mode == "combined") activeBg else inactiveBg)
+        btnCombined.setTextColor(if (mode == "combined") activeText else inactiveText)
+
+        when (mode) {
+            "audio" -> {
+                tvModeIcon.text = "♪"
+                tvModeDesc.text = "Audio fingerprints only — fastest, best for reused music"
+            }
+            "video" -> {
+                tvModeIcon.text = "▶"
+                tvModeDesc.text = "Visual frame hashes — best when audio differs"
+            }
+            "combined" -> {
+                tvModeIcon.text = "✦"
+                tvModeDesc.text = "Audio + video fused — most accurate, recommended"
+            }
+        }
     }
 
     private fun updateAnalyzeButton() {
         btnAnalyze.isEnabled = uriA != null && uriB != null
+        if (btnAnalyze.isEnabled) {
+            btnAnalyze.setBackgroundColor(getColor(R.color.primary))
+            btnAnalyze.setTextColor(getColor(R.color.white))
+        } else {
+            btnAnalyze.setBackgroundColor(getColor(R.color.border))
+            btnAnalyze.setTextColor(getColor(R.color.text_secondary))
+        }
     }
 
     private fun analyze() {
         val a = uriA ?: return
         val b = uriB ?: return
 
-        // Disable buttons during analysis
-        btnA.isEnabled = false
-        btnB.isEnabled = false
         progressBar.visibility = View.VISIBLE
         tvInfo.visibility = View.VISIBLE
         btnAnalyze.isEnabled = false
         tvInfo.text = "Starting analysis..."
+
+        ResultHolder.videoUriA = a
+        ResultHolder.videoUriB = b
+        ResultHolder.fileNameA = nameA
+        ResultHolder.fileNameB = nameB
+        ResultHolder.settings = settings
 
         lifecycleScope.launch {
             try {
@@ -115,7 +168,7 @@ class CompareActivity : AppCompatActivity() {
                 }
 
                 if (result.matches.isEmpty() && !result.stats.detectedIntro && !result.stats.detectedOutro) {
-                    tvInfo.text = "No matches found. Try adjusting settings or using a different mode."
+                    tvInfo.text = "No matches found. Try different settings or mode."
                     return@launch
                 }
 
@@ -130,9 +183,8 @@ class CompareActivity : AppCompatActivity() {
                 tvInfo.text = "Error: ${e.message ?: "Unknown error"}"
             } finally {
                 progressBar.visibility = View.GONE
-                btnA.isEnabled = true
-                btnB.isEnabled = true
                 btnAnalyze.isEnabled = true
+                updateAnalyzeButton()
             }
         }
     }
@@ -145,13 +197,4 @@ class CompareActivity : AppCompatActivity() {
         }
         return uri.lastPathSegment
     }
-}
-
-/** Singleton to pass results between activities. */
-object ResultHolder {
-    enum class Type { COMPARE, DETECT }
-    var comparisonResult: ComparisonResult? = null
-    var detectionResult: com.infro.app.model.DetectionResult? = null
-    var resultType: Type = Type.COMPARE
-    var resultJson: String? = null
 }
