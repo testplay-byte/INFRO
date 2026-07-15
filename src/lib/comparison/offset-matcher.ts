@@ -262,12 +262,36 @@ export function matchByOffsetHistogram(
           }
         }
         const similarity = cnt > 0 ? sum / cnt : 0;
-        // Only accept if similarity is reasonable (filters false positives
-        // from hash collisions)
-        if (similarity >= threshold * 0.8) {
+
+        // Strict acceptance: require actual similarity >= threshold (not a
+        // relaxed fraction). This eliminates false positives from hash
+        // collisions that only loosely match.
+        if (similarity >= threshold) {
+          // ---- Boundary refinement ----
+          // The density-window flags start a few frames AFTER the true
+          // visual match begins (the window needs to "fill up"). Extend the
+          // run backward and forward while similarity stays reasonably high,
+          // so the reported start/end capture the true edges — critical for
+          // accurate intro start points.
+          let refinedStart = runStart;
+          let refinedEnd = runEnd;
+          const edgeThreshold = threshold * 0.75; // gradual fade-out threshold
+          while (
+            refinedStart > 0 &&
+            sims[refinedStart - 1] >= edgeThreshold
+          ) {
+            refinedStart--;
+          }
+          while (
+            refinedEnd < len - 1 &&
+            sims[refinedEnd + 1] >= edgeThreshold
+          ) {
+            refinedEnd++;
+          }
+
           raw.push({
-            aStartIdx: iStart + runStart,
-            aEndIdx: iStart + runEnd,
+            aStartIdx: iStart + refinedStart,
+            aEndIdx: iStart + refinedEnd,
             offset: d,
             similarity,
             method,

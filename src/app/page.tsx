@@ -104,17 +104,21 @@ function IdleView({
   onRun: () => void;
 }) {
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       {/* Hero */}
       <section className="text-center">
-        <div className="mx-auto inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card/50 px-3 py-1 text-[11px] text-muted-foreground">
-          <Lock className="h-3 w-3 text-sage" />
+        <div className="mx-auto inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-medium text-primary">
+          <Lock className="h-3.5 w-3.5" />
           100% in-browser · no uploads · no servers
         </div>
-        <h1 className="mx-auto mt-4 max-w-2xl text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
-          Find repeated intros, outros &amp; clips between two videos
+        <h1 className="mx-auto mt-6 max-w-3xl text-balance text-4xl font-bold tracking-tight sm:text-5xl">
+          Find repeated{" "}
+          <span className="bg-gradient-to-r from-primary to-copper bg-clip-text text-transparent">
+            intros, outros
+          </span>{" "}
+          &amp; clips between two videos
         </h1>
-        <p className="mx-auto mt-3 max-w-xl text-balance text-sm text-muted-foreground">
+        <p className="mx-auto mt-4 max-w-xl text-balance text-base text-muted-foreground">
           Infro compares audio and visual fingerprints entirely on your device
           to surface matching segments — even when they&apos;re offset, partial,
           or scattered across the timeline.
@@ -122,7 +126,7 @@ function IdleView({
       </section>
 
       {/* Upload */}
-      <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <section className="grid grid-cols-1 gap-5 md:grid-cols-2">
         <UploadCard slot="A" label="Video A" accent="amber" />
         <UploadCard slot="B" label="Video B" accent="sage" />
       </section>
@@ -134,13 +138,13 @@ function IdleView({
           disabled={!canStart}
           onClick={onRun}
           className={cn(
-            "h-12 gap-2 rounded-xl px-8 text-sm font-medium shadow-sm transition-all",
-            canStart && "shadow-primary/20",
+            "h-14 gap-2.5 rounded-xl px-10 text-base font-bold shadow-lg transition-all",
+            canStart && "shadow-primary/30 hover:scale-[1.02]",
           )}
         >
-          <Play className="h-4 w-4" />
+          <Play className="h-5 w-5" />
           {hasA && hasB ? "Analyze similarity" : "Add both videos to begin"}
-          {canStart && <ArrowRight className="h-4 w-4" />}
+          {canStart && <ArrowRight className="h-5 w-5" />}
         </Button>
         {!canStart && hasA && hasB && (
           <p className="text-[11px] text-muted-foreground">
@@ -150,28 +154,28 @@ function IdleView({
       </section>
 
       {/* Feature row */}
-      <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Feature
-          icon={<Zap className="h-4 w-4" />}
+          icon={<Zap className="h-5 w-5" />}
           title="Multi-signal matching"
           body="Perceptual frame hashing, color histograms and chroma audio fingerprints are fused for robust detection."
         />
         <Feature
-          icon={<Cpu className="h-4 w-4" />}
+          icon={<Cpu className="h-5 w-5" />}
           title="WebWorker-powered"
           body="Frame extraction, FFT and cross-similarity run off the main thread so the UI never freezes."
         />
         <Feature
-          icon={<ShieldCheck className="h-4 w-4" />}
+          icon={<ShieldCheck className="h-5 w-5" />}
           title="Private by design"
           body="Your media never leaves the browser. Everything — decode, fingerprint, compare — is local."
         />
       </section>
 
       {/* How it works */}
-      <section className="rounded-2xl border border-border/60 bg-card/40 p-5">
-        <h2 className="text-sm font-semibold">How it works</h2>
-        <ol className="mt-3 grid grid-cols-1 gap-3 text-[13px] text-muted-foreground sm:grid-cols-4">
+      <section className="rounded-2xl border border-border/60 bg-card/40 p-6">
+        <h2 className="text-base font-bold">How it works</h2>
+        <ol className="mt-4 grid grid-cols-1 gap-4 text-sm text-muted-foreground sm:grid-cols-4">
           <Step n={1} title="Upload" body="Drop two videos or audio files. They stay on your device." />
           <Step n={2} title="Choose a mode" body="Audio, Video, or Combined for the strongest signal." />
           <Step n={3} title="Analyze" body="Frames & audio are fingerprinted, then cross-correlated." />
@@ -192,12 +196,12 @@ function Feature({
   body: string;
 }) {
   return (
-    <div className="rounded-xl border border-border/60 bg-card/40 p-4">
-      <div className="grid h-8 w-8 place-items-center rounded-lg bg-primary/10 text-primary">
+    <div className="rounded-xl border border-border/60 bg-card/50 p-5 transition-colors hover:border-primary/30">
+      <div className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10 text-primary">
         {icon}
       </div>
-      <h3 className="mt-2.5 text-[13px] font-semibold">{title}</h3>
-      <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
+      <h3 className="mt-3 text-sm font-bold">{title}</h3>
+      <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">
         {body}
       </p>
     </div>
@@ -206,13 +210,13 @@ function Feature({
 
 function Step({ n, title, body }: { n: number; title: string; body: string }) {
   return (
-    <div className="flex gap-2.5">
-      <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary/15 font-mono text-[11px] font-semibold text-primary">
+    <div className="flex gap-3">
+      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary/15 font-mono text-sm font-bold text-primary">
         {n}
       </span>
       <div>
-        <p className="font-medium text-foreground">{title}</p>
-        <p className="mt-0.5 text-[12px] text-muted-foreground">{body}</p>
+        <p className="font-semibold text-foreground">{title}</p>
+        <p className="mt-1 text-[13px] text-muted-foreground">{body}</p>
       </div>
     </div>
   );

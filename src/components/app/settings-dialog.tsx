@@ -111,8 +111,8 @@ export function SettingsDialog({ open, onOpenChange }: Props) {
             >
               <Slider
                 value={[settings.similarityThreshold]}
-                min={0.6}
-                max={0.95}
+                min={0.7}
+                max={0.98}
                 step={0.01}
                 onValueChange={(v) => set({ similarityThreshold: v[0] })}
               />
@@ -123,9 +123,9 @@ export function SettingsDialog({ open, onOpenChange }: Props) {
             >
               <Slider
                 value={[settings.minMatchDuration]}
-                min={1}
-                max={15}
-                step={0.5}
+                min={2}
+                max={30}
+                step={1}
                 onValueChange={(v) => set({ minMatchDuration: v[0] })}
               />
             </Field>
@@ -136,7 +136,7 @@ export function SettingsDialog({ open, onOpenChange }: Props) {
               <Slider
                 value={[settings.maxGap]}
                 min={0.3}
-                max={5}
+                max={3}
                 step={0.1}
                 onValueChange={(v) => set({ maxGap: v[0] })}
               />
