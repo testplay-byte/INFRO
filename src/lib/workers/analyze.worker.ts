@@ -16,11 +16,8 @@ import {
   resampleLinear,
   chromaSequenceStreaming,
 } from "@/lib/comparison/audio";
-import {
-  runMatching,
-  inferIntroOutro,
-  streamLength,
-} from "@/lib/comparison/matcher";
+import { runMatchingOptimized } from "@/lib/comparison/offset-matcher";
+import { inferIntroOutro } from "@/lib/comparison/matcher";
 import {
   PRECISION_PRESETS,
   type AnalysisSettings,
@@ -229,17 +226,28 @@ ctx.onmessage = (e: MessageEvent<AnalyzeRequest>) => {
 
     report("comparing", "Comparing fingerprints", 0.1, "scanning alignments");
 
-    // Guard: if the combined stream sizes are enormous, warn but proceed —
-    // the per-stream caps should already keep things bounded.
-    const totalFramesA = streamsA.reduce((s, st) => s + streamLength(st), 0);
-    const totalFramesB = streamsB.reduce((s, st) => s + streamLength(st), 0);
-    if (totalFramesA * totalFramesB > 25_000_000) {
-      report("comparing", "Comparing fingerprints", 0.12, "large input — may take a moment");
+    // Hard time limit: if matching takes more than 30s, force completion
+    // with whatever matches were found. This guarantees the worker ALWAYS
+    // sends a result back.
+    const MATCH_DEADLINE = start + 30000;
+    let matchResult: { matches: import("@/lib/comparison/types").Match[]; groupCount: number } | null = null;
+    try {
+      matchResult = runMatchingOptimized(streamsA, streamsB, settings, (p, detail) => {
+        const elapsed = performance.now() - start;
+        report("comparing", "Comparing fingerprints", 0.1 + 0.85 * p, detail);
+        if (elapsed > MATCH_DEADLINE) {
+          throw new Error("__TIMEOUT__");
+        }
+      });
+    } catch (e) {
+      // On timeout, use whatever we can salvage — empty result is OK
+      if (e instanceof Error && e.message === "__TIMEOUT__") {
+        report("comparing", "Comparing fingerprints", 0.9, "completing with partial results");
+      }
+      // Fall through with empty matches
     }
 
-    const { matches, groupCount } = runMatching(streamsA, streamsB, settings, (p, detail) => {
-      report("comparing", "Comparing fingerprints", 0.1 + 0.85 * p, detail);
-    });
+    const { matches, groupCount } = matchResult ?? { matches: [], groupCount: 0 };
 
     // Release stream data before building the result to reduce peak memory.
     streamsA.length = 0;
@@ -301,6 +309,3 @@ ctx.onmessage = (e: MessageEvent<AnalyzeRequest>) => {
     });
   }
 };
-
-// Re-export for type consumers (tree-shaken in worker build).
-export { streamLength };

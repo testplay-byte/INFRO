@@ -159,7 +159,7 @@ export async function extractFrames(
       throw new Error("Video is longer than 2 hours. Please use a shorter clip.");
     }
 
-    const MAX_FRAMES = 500;
+    const MAX_FRAMES = 300;
     let count = Math.max(2, Math.floor(duration * fps));
     if (count > MAX_FRAMES) count = MAX_FRAMES;
     const effFps = (count - 1) / duration;
@@ -171,7 +171,10 @@ export async function extractFrames(
       const t = i / effFps;
       times[i] = t;
       await seekTo(video, t);
-      await new Promise((r) => requestAnimationFrame(() => r(null)));
+      // Small delay to let the browser paint the frame — use setTimeout
+      // instead of requestAnimationFrame because RAF stops firing when the
+      // tab loses focus, which would hang extraction forever.
+      await new Promise((r) => setTimeout(r, 10));
       ctx?.clearRect(0, 0, W, H);
       ctx?.drawImage(video, 0, 0, W, H);
       const img = ctx?.getImageData(0, 0, W, H);

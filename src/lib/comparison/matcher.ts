@@ -84,7 +84,7 @@ function pairSimilarity(
   return cosineSimilarity(A.vectors[i], B.vectors[j]);
 }
 
-interface RawMatch {
+export interface RawMatch {
   aStartIdx: number;
   aEndIdx: number; // inclusive
   offset: number;
@@ -222,7 +222,7 @@ export function matchStream(
 }
 
 /** Convert raw matches to final Match objects with real timestamps. */
-function rawToMatches(
+export function rawToMatches(
   raw: RawMatch[],
   A: FingerprintStream,
   B: FingerprintStream,

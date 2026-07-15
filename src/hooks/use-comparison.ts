@@ -171,58 +171,68 @@ export function useComparison() {
       workerRef.current = worker;
 
       const result = await new Promise<ComparisonResult>((resolve, reject) => {
-        // Timeout guard — if the worker is unresponsive for 90s, abort.
-        const timeoutId = setTimeout(() => {
-          reject(
-            new Error(
-              "Analysis timed out. The files may be too large or complex. Try shorter clips or the 'fast' precision preset.",
-            ),
-          );
-        }, 90000);
-
-        const onMsg = (e: MessageEvent<WorkerOut>) => {
-          const msg = e.data;
-          if (msg.type === "progress") {
-            // Reset the timeout on each progress tick — the worker is alive.
-            clearTimeout(timeoutId);
-            setTimeout(() => {
-              // re-arm if still pending
-            }, 0);
-            const sp = msg.data as StageProgress;
-            useStore.getState().updateStage(sp);
-            // Re-arm a shorter inactivity timeout (15s without progress)
-            clearTimeout(timeoutId);
-            const inactivityId = setTimeout(() => {
+        let settled = false;
+        // Single watchdog timer — resets on every progress message. If no
+        // progress for 45s, reject with a clear error.
+        let watchdogId: ReturnType<typeof setTimeout>;
+        const armWatchdog = () => {
+          if (watchdogId) clearTimeout(watchdogId);
+          watchdogId = setTimeout(() => {
+            if (!settled) {
+              settled = true;
               reject(
                 new Error(
-                  "Analysis stalled — the worker stopped responding. Try shorter clips or a different precision setting.",
+                  "Analysis stalled — no progress for 45 seconds. The files may be too large for in-browser processing. Try shorter clips, 'fast' precision, or a single mode (Audio or Video only).",
                 ),
               );
-            }, 30000);
-            // Store for cleanup
-            (onMsg as unknown as { _inactivityId?: number })._inactivityId =
-              inactivityId;
+            }
+          }, 45000);
+        };
+        armWatchdog();
+
+        // Absolute deadline — no matter what, after 3 minutes we bail.
+        const absoluteDeadline = setTimeout(() => {
+          if (!settled) {
+            settled = true;
+            reject(
+              new Error(
+                "Analysis exceeded the 3-minute time limit. Please use shorter clips or the 'fast' precision preset.",
+              ),
+            );
+          }
+        }, 180000);
+
+        const cleanup = () => {
+          if (watchdogId) clearTimeout(watchdogId);
+          clearTimeout(absoluteDeadline);
+          worker.removeEventListener("message", onMsg);
+        };
+
+        const onMsg = (e: MessageEvent<WorkerOut>) => {
+          if (settled) return;
+          const msg = e.data;
+          if (msg.type === "progress") {
+            armWatchdog(); // worker is alive — reset the inactivity timer
+            useStore.getState().updateStage(msg.data as StageProgress);
           } else if (msg.type === "result") {
-            clearTimeout(timeoutId);
-            const fn = onMsg as unknown as { _inactivityId?: number };
-            if (fn._inactivityId) clearTimeout(fn._inactivityId);
-            worker.removeEventListener("message", onMsg);
+            settled = true;
+            cleanup();
             resolve(msg.data);
           } else if (msg.type === "error") {
-            clearTimeout(timeoutId);
-            const fn = onMsg as unknown as { _inactivityId?: number };
-            if (fn._inactivityId) clearTimeout(fn._inactivityId);
-            worker.removeEventListener("message", onMsg);
+            settled = true;
+            cleanup();
             reject(new Error(msg.message));
           }
         };
         worker.addEventListener("message", onMsg);
         worker.addEventListener("error", (err) => {
-          clearTimeout(timeoutId);
+          if (settled) return;
+          settled = true;
+          cleanup();
           reject(
             new Error(
               err.message ||
-                "The analysis worker crashed. This is often an out-of-memory error — try shorter clips.",
+                "The analysis worker crashed. This is often an out-of-memory error — try shorter clips or a single mode.",
             ),
           );
         });
