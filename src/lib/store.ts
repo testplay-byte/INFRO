@@ -12,11 +12,14 @@ import {
   DEFAULT_SETTINGS,
   type AnalysisSettings,
   type ComparisonResult,
+  type DetectionResult,
   type MediaMeta,
+  type SignatureData,
   type StageProgress,
 } from "@/lib/comparison/types";
 
 export type AppStatus = "idle" | "processing" | "done" | "error";
+export type ViewMode = "compare" | "detect";
 
 interface FileSlot {
   file: File | null;
@@ -26,27 +29,36 @@ interface FileSlot {
 }
 
 interface AppState {
+  viewMode: ViewMode;
   slotA: FileSlot;
   slotB: FileSlot;
+  /** Signature file for detect mode. */
+  signatureFile: File | null;
+  signatureData: SignatureData | null;
   settings: AnalysisSettings;
   status: AppStatus;
   stages: StageProgress[];
   currentStage: StageProgress | null;
   result: ComparisonResult | null;
+  /** Detection result for detect mode. */
+  detectionResult: DetectionResult | null;
   selectedMatchId: string | null;
   error: string | null;
   /** wall-clock processing time once complete */
   elapsedMs: number;
 
   // actions
+  setViewMode: (mode: ViewMode) => void;
   setFile: (slot: "A" | "B", file: File | null, meta: MediaMeta | null) => void;
   setAudioAvailability: (slot: "A" | "B", available: boolean) => void;
+  setSignature: (file: File | null, data: SignatureData | null) => void;
   updateSettings: (patch: Partial<AnalysisSettings>) => void;
   resetSettings: () => void;
   setStatus: (s: AppStatus, error?: string) => void;
   pushStage: (stage: StageProgress) => void;
   updateStage: (stage: StageProgress) => void;
   setResult: (r: ComparisonResult, elapsedMs: number) => void;
+  setDetectionResult: (r: DetectionResult, elapsedMs: number) => void;
   selectMatch: (id: string | null) => void;
   reset: () => void;
   canStart: () => boolean;
@@ -60,16 +72,32 @@ const emptySlot: FileSlot = {
 };
 
 export const useStore = create<AppState>((set, get) => ({
+  viewMode: "compare",
   slotA: { ...emptySlot },
   slotB: { ...emptySlot },
+  signatureFile: null,
+  signatureData: null,
   settings: { ...DEFAULT_SETTINGS },
   status: "idle",
   stages: [],
   currentStage: null,
   result: null,
+  detectionResult: null,
   selectedMatchId: null,
   error: null,
   elapsedMs: 0,
+
+  setViewMode: (mode) =>
+    set({
+      viewMode: mode,
+      status: "idle",
+      result: null,
+      detectionResult: null,
+      selectedMatchId: null,
+      stages: [],
+      currentStage: null,
+      error: null,
+    }),
 
   setFile: (slot, file, meta) => {
     const prev = get()[slot === "A" ? "slotA" : "slotB"];
@@ -85,6 +113,7 @@ export const useStore = create<AppState>((set, get) => ({
       [slot === "A" ? "slotA" : "slotB"]: next,
       status: "idle",
       result: null,
+      detectionResult: null,
       selectedMatchId: null,
       stages: [],
       currentStage: null,
@@ -96,6 +125,17 @@ export const useStore = create<AppState>((set, get) => ({
     const key = slot === "A" ? "slotA" : "slotB";
     set((s) => ({ [key]: { ...s[key], audioAvailable: available } } as Partial<AppState>));
   },
+
+  setSignature: (file, data) =>
+    set({
+      signatureFile: file,
+      signatureData: data,
+      status: "idle",
+      detectionResult: null,
+      stages: [],
+      currentStage: null,
+      error: null,
+    }),
 
   updateSettings: (patch) =>
     set((s) => ({ settings: { ...s.settings, ...patch } })),
@@ -120,6 +160,9 @@ export const useStore = create<AppState>((set, get) => ({
   setResult: (r, elapsedMs) =>
     set({ result: r, status: "done", elapsedMs, currentStage: null }),
 
+  setDetectionResult: (r, elapsedMs) =>
+    set({ detectionResult: r, status: "done", elapsedMs, currentStage: null }),
+
   selectMatch: (id) => set({ selectedMatchId: id }),
 
   reset: () => {
@@ -129,8 +172,11 @@ export const useStore = create<AppState>((set, get) => ({
     set({
       slotA: { ...emptySlot },
       slotB: { ...emptySlot },
+      signatureFile: null,
+      signatureData: null,
       status: "idle",
       result: null,
+      detectionResult: null,
       selectedMatchId: null,
       stages: [],
       currentStage: null,
@@ -140,8 +186,11 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   canStart: () => {
-    const { slotA, slotB, settings, status } = get();
+    const { viewMode, slotA, slotB, signatureData, settings, status } = get();
     if (status === "processing") return false;
+    if (viewMode === "detect") {
+      return !!signatureData && (!!slotB.file || !!slotA.file);
+    }
     if (!slotA.file || !slotB.file) return false;
     if (settings.mode === "audio") {
       return slotA.audioAvailable !== false && slotB.audioAvailable !== false;

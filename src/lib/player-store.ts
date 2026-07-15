@@ -89,3 +89,40 @@ export function mapTimeAcrossMatches(
   }
   return { a: t, b: t, inMatch: false };
 }
+
+/**
+ * Compute the dominant time offset between the two videos from all matches.
+ * This is the median (bStart - aStart) across all matches — the most common
+ * alignment between the two videos. Used for linked seeking OUTSIDE of
+ * matches: when linked, seeking video A to time T seeks video B to T + offset.
+ */
+export function getDominantOffset(matches: Match[]): number {
+  if (matches.length === 0) return 0;
+  const offsets = matches.map((m) => m.bStart - m.aStart);
+  offsets.sort((a, b) => a - b);
+  return offsets[Math.floor(offsets.length / 2)];
+}
+
+/**
+ * Map a time in one video to the other, using match interpolation when
+ * inside a match, and the dominant offset otherwise. This ensures that
+ * linked seeking ALWAYS syncs both videos — inside matches it uses the
+ * precise match mapping, and outside matches it uses the global offset.
+ */
+export function mapTimeLinked(
+  t: number,
+  fromSlot: "A" | "B",
+  matches: Match[],
+): { a: number; b: number; inMatch: boolean } {
+  // First try precise match mapping
+  const mapped = mapTimeAcrossMatches(t, fromSlot, matches);
+  if (mapped.inMatch) return mapped;
+
+  // Outside any match — use the dominant offset
+  const offset = getDominantOffset(matches);
+  if (fromSlot === "A") {
+    return { a: t, b: t + offset, inMatch: false };
+  } else {
+    return { a: t - offset, b: t, inMatch: false };
+  }
+}

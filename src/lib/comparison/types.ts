@@ -114,6 +114,75 @@ export interface ComparisonResult {
   mode: ComparisonMode;
   /** Match groups keyed by a shared offset-cluster id, used for coloring. */
   groupCount: number;
+  /** Robust signature containing actual fingerprints for export. */
+  signature?: SignatureData;
+}
+
+/**
+ * A robust, portable signature containing the actual fingerprint data for
+ * detected intro/outro segments. This can be saved as JSON and later loaded
+ * to detect the same intro/outro in a NEW video via fingerprint matching.
+ */
+export interface SignatureData {
+  version: "1.0";
+  generatedAt: string;
+  mode: ComparisonMode;
+  frameSampleRate: number;
+  audioSampleRate: number;
+  sources: {
+    a: { fileName: string; duration: number };
+    b: { fileName: string; duration: number };
+  };
+  segments: SignatureSegment[];
+}
+
+export interface SignatureSegment {
+  label: "intro" | "outro" | "match";
+  /** Time range in source A. */
+  aStart: number;
+  aEnd: number;
+  /** Time range in source B. */
+  bStart: number;
+  bEnd: number;
+  confidence: number;
+  method: string[];
+  /** Video dHash fingerprints (32-bit) for the segment frames. */
+  videoHashes: number[];
+  /** Timestamps (seconds) for each video frame. */
+  videoTimes: number[];
+  /** Hop (seconds) between video frames. */
+  videoHop: number;
+  /** Audio chroma feature vectors (12-dim) for the segment. */
+  audioChroma: number[][];
+  /** Timestamps (seconds) for each audio frame. */
+  audioTimes: number[];
+  /** Hop (seconds) between audio frames. */
+  audioHop: number;
+}
+
+/** Result of detecting intro/outro in a new video using a signature. */
+export interface DetectionResult {
+  /** Where each signature segment was found in the new video. */
+  detections: SegmentDetection[];
+  /** Metadata of the analyzed video. */
+  videoMeta: MediaMeta;
+  /** Processing stats. */
+  processingTimeMs: number;
+  framesAnalyzed: number;
+  audioSamplesAnalyzed: number;
+}
+
+export interface SegmentDetection {
+  label: "intro" | "outro" | "match";
+  /** Time range in the NEW video where this segment was found. */
+  start: number;
+  end: number;
+  /** Original time range from the signature. */
+  signatureStart: number;
+  signatureEnd: number;
+  confidence: number;
+  method: string[];
+  found: boolean;
 }
 
 /** User-tunable advanced settings. */

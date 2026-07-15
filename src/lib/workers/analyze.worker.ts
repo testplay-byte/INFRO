@@ -16,14 +16,18 @@ import {
   resampleLinear,
   chromaSequenceStreaming,
 } from "@/lib/comparison/audio";
-import { runMatchingOptimized } from "@/lib/comparison/offset-matcher";
-import { inferIntroOutro } from "@/lib/comparison/matcher";
+import { runMatchingOptimized, matchByOffsetHistogram } from "@/lib/comparison/offset-matcher";
+import { inferIntroOutro, dedupeMatches, rawToMatches } from "@/lib/comparison/matcher";
 import {
   PRECISION_PRESETS,
   type AnalysisSettings,
   type ComparisonResult,
+  type DetectionResult,
   type FingerprintStream,
   type MediaMeta,
+  type SignatureData,
+  type SignatureSegment,
+  type SegmentDetection,
   type StageProgress,
 } from "@/lib/comparison/types";
 
@@ -52,9 +56,19 @@ export interface AnalyzeRequest {
   settings: AnalysisSettings;
 }
 
+export interface DetectRequest {
+  type: "detect";
+  signature: SignatureData;
+  frames: FramePack | null;
+  audio: AudioPack | null;
+  meta: MediaMeta;
+  settings: AnalysisSettings;
+}
+
 export type WorkerOut =
   | { type: "progress"; data: StageProgress }
   | { type: "result"; data: ComparisonResult }
+  | { type: "detect-result"; data: DetectionResult }
   | { type: "error"; message: string };
 
 function post(msg: WorkerOut) {
@@ -194,7 +208,26 @@ const ctx = self as unknown as Worker;
 
 ctx.onmessage = (e: MessageEvent<AnalyzeRequest>) => {
   const req = e.data;
-  if (!req || req.type !== "analyze") return;
+  if (!req) return;
+
+  // Detect mode
+  if (req.type === "detect") {
+    const start = performance.now();
+    try {
+      handleDetect(req, start);
+    } catch (err) {
+      post({
+        type: "error",
+        message:
+          err instanceof Error
+            ? err.message
+            : "Detection failed — the signature or video may be invalid.",
+      });
+    }
+    return;
+  }
+
+  if (req.type !== "analyze") return;
   const start = performance.now();
   try {
     const { settings, metaA, metaB } = req;
@@ -249,10 +282,6 @@ ctx.onmessage = (e: MessageEvent<AnalyzeRequest>) => {
 
     const { matches, groupCount } = matchResult ?? { matches: [], groupCount: 0 };
 
-    // Release stream data before building the result to reduce peak memory.
-    streamsA.length = 0;
-    streamsB.length = 0;
-
     report("building-timeline", "Building timeline", 0.4, `${matches.length} regions`);
     const introOutro = inferIntroOutro(matches, metaA.duration, metaB.duration);
 
@@ -294,6 +323,7 @@ ctx.onmessage = (e: MessageEvent<AnalyzeRequest>) => {
       streamB: metaB,
       mode: settings.mode,
       groupCount,
+      signature: buildSignature(streamsA, streamsB, sorted, introOutro, settings, metaA, metaB),
     };
 
     report("rendering", "Rendering results", 1);
@@ -309,3 +339,287 @@ ctx.onmessage = (e: MessageEvent<AnalyzeRequest>) => {
     });
   }
 };
+
+/**
+ * Build a robust, portable signature containing the actual fingerprint data
+ * for the detected intro/outro segments. This can be saved as JSON and later
+ * loaded to detect the same intro/outro in a NEW video.
+ */
+function buildSignature(
+  streamsA: FingerprintStream[],
+  streamsB: FingerprintStream[],
+  matches: import("@/lib/comparison/types").Match[],
+  introOutro: import("@/lib/comparison/types").IntroOutroResult,
+  settings: AnalysisSettings,
+  metaA: MediaMeta,
+  metaB: MediaMeta,
+): SignatureData {
+  const videoA = streamsA.filter((s) => s.kind === "video-dhash");
+  const audioA = streamsA.filter((s) => s.kind.startsWith("audio"));
+
+  const segments: SignatureSegment[] = [];
+
+  // Add intro segment
+  if (introOutro.intro) {
+    const seg = extractSegment(
+      introOutro.intro,
+      "intro",
+      videoA[0],
+      audioA[0],
+    );
+    if (seg) segments.push(seg);
+  }
+
+  // Add outro segment
+  if (introOutro.outro) {
+    const seg = extractSegment(
+      introOutro.outro,
+      "outro",
+      videoA[0],
+      audioA[0],
+    );
+    if (seg) segments.push(seg);
+  }
+
+  return {
+    version: "1.0",
+    generatedAt: new Date().toISOString(),
+    mode: settings.mode,
+    frameSampleRate: settings.frameSampleRate,
+    audioSampleRate: settings.audioSampleRate,
+    sources: {
+      a: { fileName: metaA.fileName, duration: metaA.duration },
+      b: { fileName: metaB.fileName, duration: metaB.duration },
+    },
+    segments,
+  };
+}
+
+/** Extract a signature segment (fingerprints) for a matched region. */
+function extractSegment(
+  match: import("@/lib/comparison/types").Match,
+  label: "intro" | "outro" | "match",
+  videoStream: FingerprintStream | undefined,
+  audioStream: FingerprintStream | undefined,
+): SignatureSegment | null {
+  const aStart = match.aStart;
+  const aEnd = match.aEnd;
+
+  // Extract video hashes for the segment
+  let videoHashes: number[] = [];
+  let videoTimes: number[] = [];
+  let videoHop = 0.5;
+  if (videoStream && videoStream.hashes) {
+    const times = videoStream.times;
+    const hashes = videoStream.hashes;
+    for (let i = 0; i < times.length; i++) {
+      if (times[i] >= aStart && times[i] <= aEnd) {
+        videoHashes.push(hashes[i]);
+        videoTimes.push(times[i]);
+      }
+    }
+    videoHop = videoStream.hop;
+  }
+
+  // Extract audio chroma for the segment
+  let audioChroma: number[][] = [];
+  let audioTimes: number[] = [];
+  let audioHop = 0.05;
+  if (audioStream) {
+    const times = audioStream.times;
+    const vectors = audioStream.vectors;
+    for (let i = 0; i < times.length; i++) {
+      if (times[i] >= aStart && times[i] <= aEnd) {
+        audioChroma.push(Array.from(vectors[i]));
+        audioTimes.push(times[i]);
+      }
+    }
+    audioHop = audioStream.hop;
+  }
+
+  if (videoHashes.length === 0 && audioChroma.length === 0) return null;
+
+  return {
+    label,
+    aStart,
+    aEnd,
+    bStart: match.bStart,
+    bEnd: match.bEnd,
+    confidence: match.confidence,
+    method: match.method,
+    videoHashes,
+    videoTimes,
+    videoHop,
+    audioChroma,
+    audioTimes,
+    audioHop,
+  };
+}
+
+/**
+ * Build a FingerprintStream from a signature segment. This lets us reuse
+ * the same matching engine for detect mode — the signature segment becomes
+ * "stream A" and the new video's fingerprints become "stream B".
+ */
+function buildStreamFromSegment(
+  seg: SignatureSegment,
+): FingerprintStream[] {
+  const streams: FingerprintStream[] = [];
+
+  if (seg.videoHashes.length > 0) {
+    const hashes = new Uint32Array(seg.videoHashes);
+    const times = new Float32Array(seg.videoTimes);
+    const vectors = new Array(seg.videoHashes.length).fill(new Float32Array(0));
+    streams.push({
+      kind: "video-dhash",
+      hop: seg.videoHop,
+      times,
+      vectors,
+      hashes,
+      sourceDuration: seg.aEnd - seg.aStart,
+    });
+  }
+
+  if (seg.audioChroma.length > 0) {
+    const times = new Float32Array(seg.audioTimes);
+    const vectors = seg.audioChroma.map((v) => new Float32Array(v));
+    streams.push({
+      kind: "audio-chroma",
+      hop: seg.audioHop,
+      times,
+      vectors,
+      hashes: null,
+      sourceDuration: seg.aEnd - seg.aStart,
+    });
+  }
+
+  return streams;
+}
+
+/** Handle detect-mode requests: find signature segments in a new video. */
+function handleDetect(req: DetectRequest, start: number) {
+  const { signature, frames, audio, meta, settings } = req;
+
+  report("fingerprinting", "Building fingerprints from video", 0.1);
+
+  // Build streams from the new video
+  const videoStreams: FingerprintStream[] = [];
+  const audioStreams: FingerprintStream[] = [];
+  if (frames) {
+    videoStreams.push(...buildVideoStreams(frames, meta.duration));
+  }
+  if (audio) {
+    const a = buildAudioStream(audio, settings);
+    if (a) audioStreams.push(a);
+  }
+
+  report("comparing", "Matching against signature", 0.2, "scanning");
+
+  const detections: SegmentDetection[] = [];
+  const allVideoStreams = [...videoStreams];
+  const allAudioStreams = [...audioStreams];
+
+  for (const seg of signature.segments) {
+    const sigStreams = buildStreamFromSegment(seg);
+    const sigVideo = sigStreams.filter((s) => s.kind === "video-dhash");
+    const sigAudio = sigStreams.filter((s) => s.kind.startsWith("audio"));
+
+    let bestDetection: SegmentDetection = {
+      label: seg.label,
+      start: 0,
+      end: 0,
+      signatureStart: seg.aStart,
+      signatureEnd: seg.aEnd,
+      confidence: 0,
+      method: [],
+      found: false,
+    };
+
+    // Match video
+    if (sigVideo.length && videoStreams.length) {
+      const sigStream = sigVideo[0];
+      const vidStream = videoStreams.filter((s) => s.kind === "video-dhash")[0];
+      if (vidStream) {
+        const relaxedSettings: AnalysisSettings = {
+          ...settings,
+          similarityThreshold: Math.max(0.65, settings.similarityThreshold - 0.1),
+          minMatchDuration: Math.max(2, settings.minMatchDuration / 3),
+          matchDensity: 0.5,
+        };
+        const raw = matchByOffsetHistogram(
+          sigStream,
+          vidStream,
+          relaxedSettings,
+          `detect-video-${seg.label}`,
+        );
+        const matches = dedupeMatches(rawToMatches(raw, sigStream, vidStream));
+        if (matches.length > 0) {
+          // Pick the highest-confidence match
+          matches.sort((a, b) => b.confidence - a.confidence);
+          const m = matches[0];
+          if (m.confidence > bestDetection.confidence) {
+            bestDetection = {
+              label: seg.label,
+              start: m.bStart,
+              end: m.bEnd,
+              signatureStart: seg.aStart,
+              signatureEnd: seg.aEnd,
+              confidence: m.confidence,
+              method: m.method,
+              found: true,
+            };
+          }
+        }
+      }
+    }
+
+    // Match audio
+    if (sigAudio.length && audioStreams.length) {
+      const sigStream = sigAudio[0];
+      const audStream = audioStreams[0];
+      const relaxedSettings: AnalysisSettings = {
+        ...settings,
+        similarityThreshold: Math.max(0.6, settings.similarityThreshold - 0.15),
+        minMatchDuration: Math.max(2, settings.minMatchDuration / 3),
+        matchDensity: 0.45,
+      };
+      const raw = matchByOffsetHistogram(
+        sigStream,
+        audStream,
+        relaxedSettings,
+        `detect-audio-${seg.label}`,
+      );
+      const matches = dedupeMatches(rawToMatches(raw, sigStream, audStream));
+      if (matches.length > 0) {
+        matches.sort((a, b) => b.confidence - a.confidence);
+        const m = matches[0];
+        if (m.confidence > bestDetection.confidence) {
+          bestDetection = {
+            label: seg.label,
+            start: m.bStart,
+            end: m.bEnd,
+            signatureStart: seg.aStart,
+            signatureEnd: seg.aEnd,
+            confidence: m.confidence,
+            method: m.method,
+            found: true,
+          };
+        }
+      }
+    }
+
+    detections.push(bestDetection);
+  }
+
+  const result: DetectionResult = {
+    detections,
+    videoMeta: meta,
+    processingTimeMs: Math.round(performance.now() - start),
+    framesAnalyzed: frames?.count ?? 0,
+    audioSamplesAnalyzed: audio?.pcm.length ?? 0,
+  };
+
+  report("rendering", "Rendering results", 1);
+  report("done", "Done", 1);
+  post({ type: "detect-result", data: result });
+}

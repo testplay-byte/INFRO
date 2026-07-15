@@ -263,31 +263,15 @@ export function matchByOffsetHistogram(
         }
         const similarity = cnt > 0 ? sum / cnt : 0;
 
-        // Strict acceptance: require actual similarity >= threshold (not a
-        // relaxed fraction). This eliminates false positives from hash
-        // collisions that only loosely match.
+        // Strict acceptance: require actual similarity >= threshold.
         if (similarity >= threshold) {
-          // ---- Boundary refinement ----
-          // The density-window flags start a few frames AFTER the true
-          // visual match begins (the window needs to "fill up"). Extend the
-          // run backward and forward while similarity stays reasonably high,
-          // so the reported start/end capture the true edges — critical for
-          // accurate intro start points.
-          let refinedStart = runStart;
-          let refinedEnd = runEnd;
-          const edgeThreshold = threshold * 0.75; // gradual fade-out threshold
-          while (
-            refinedStart > 0 &&
-            sims[refinedStart - 1] >= edgeThreshold
-          ) {
-            refinedStart--;
-          }
-          while (
-            refinedEnd < len - 1 &&
-            sims[refinedEnd + 1] >= edgeThreshold
-          ) {
-            refinedEnd++;
-          }
+          // ---- Gradient-based boundary refinement ----
+          // Extend backward/forward to find the TRUE edges where similarity
+          // drops off. We stop at the steepest descent point rather than
+          // extending while above a fixed floor — this prevents the match
+          // from bleeding into adjacent content during gradual transitions.
+          const refinedStart = refineStartBoundary(sims, runStart);
+          const refinedEnd = refineEndBoundary(sims, runEnd, len);
 
           raw.push({
             aStartIdx: iStart + refinedStart,
@@ -304,6 +288,54 @@ export function matchByOffsetHistogram(
 
   if (onProgress) onProgress(1, `${method} · done`);
   return raw;
+}
+
+/**
+ * Refine the START boundary: extend backward while similarity is above the
+ * floor, but stop at the steepest drop-off. Uses 75% of threshold as the
+ * floor and detects the gradient change to avoid over-extension.
+ */
+function refineStartBoundary(
+  sims: Float32Array,
+  runStart: number,
+): number {
+  const floor = 0.6; // absolute floor — below this is definitely not a match
+  let pos = runStart;
+  let prevSim = sims[runStart];
+  while (pos > 0) {
+    const nextSim = sims[pos - 1];
+    if (nextSim < floor) break;
+    // Stop if we detect a significant drop (steepest descent point)
+    if (prevSim - nextSim > 0.15 && nextSim < 0.75) break;
+    pos--;
+    prevSim = nextSim;
+  }
+  return pos;
+}
+
+/**
+ * Refine the END boundary: extend forward, but stop MORE aggressively than
+ * the start. The end of an intro/outro is where the unique content begins,
+ * so we use a tighter floor and detect the drop-off sooner to prevent the
+ * match from extending too late.
+ */
+function refineEndBoundary(
+  sims: Float32Array,
+  runEnd: number,
+  len: number,
+): number {
+  const floor = 0.7; // tighter floor for the end — prevents over-extension
+  let pos = runEnd;
+  let prevSim = sims[runEnd];
+  while (pos < len - 1) {
+    const nextSim = sims[pos + 1];
+    if (nextSim < floor) break;
+    // Stop at the first significant drop — this is the true boundary
+    if (prevSim - nextSim > 0.1 && nextSim < 0.8) break;
+    pos++;
+    prevSim = nextSim;
+  }
+  return pos;
 }
 
 /**
@@ -371,6 +403,24 @@ export function runMatchingOptimized(
   }
 
   matches = dedupeMatches(matches);
+
+  // ---- Targeted outro scan ----
+  // The outro often has slightly lower similarity (encoding differences at
+  // the end of videos, credits fading in, etc.) and may not pass the strict
+  // threshold. We do a targeted scan of the last 30s of both videos with a
+  // relaxed threshold specifically to catch the outro.
+  const outroScan = targetedEndScan(streamsA, streamsB, settings);
+  if (outroScan) {
+    // Only add if it doesn't heavily overlap with an existing match
+    const overlaps = matches.some(
+      (m) => overlapFractionA(m, outroScan) > 0.5,
+    );
+    if (!overlaps) {
+      matches.push(outroScan);
+      matches = dedupeMatches(matches);
+    }
+  }
+
   // Cap total matches to prevent UI overload
   if (matches.length > 200) {
     matches = matches
@@ -381,6 +431,121 @@ export function runMatchingOptimized(
   const grouped = assignGroups(matches, hop);
   onProgress?.(1, "done");
   return grouped;
+}
+
+/** Check if two matches overlap heavily in the A timeline. */
+function overlapFractionA(a: Match, b: Match): number {
+  const start = Math.max(a.aStart, b.aStart);
+  const end = Math.min(a.aEnd, b.aEnd);
+  if (end <= start) return 0;
+  const minLen = Math.min(a.aEnd - a.aStart, b.aEnd - b.aStart);
+  return minLen > 0 ? (end - start) / minLen : 0;
+}
+
+/**
+ * Targeted scan of the END regions of both videos to catch outros that
+ * don't pass the strict threshold. Compares only the last 30 seconds using
+ * a relaxed threshold.
+ */
+function targetedEndScan(
+  streamsA: FingerprintStream[],
+  streamsB: FingerprintStream[],
+  settings: AnalysisSettings,
+): Match | null {
+  const videoA = streamsA.filter((s) => s.kind === "video-dhash");
+  const videoB = streamsB.filter((s) => s.kind === "video-dhash");
+  const audioA = streamsA.filter((s) => s.kind.startsWith("audio"));
+  const audioB = streamsB.filter((s) => s.kind.startsWith("audio"));
+
+  // Build sub-streams containing only the last 30 seconds
+  const END_WINDOW = 30;
+  const relaxedSettings: AnalysisSettings = {
+    ...settings,
+    similarityThreshold: Math.max(0.7, settings.similarityThreshold - 0.1),
+    minMatchDuration: Math.max(3, settings.minMatchDuration / 2),
+    matchDensity: 0.5,
+  };
+
+  let bestMatch: Match | null = null;
+
+  // Try video
+  if (videoA.length && videoB.length) {
+    const subA = substreamLastN(videoA[0], END_WINDOW);
+    const subB = substreamLastN(videoB[0], END_WINDOW);
+    if (subA && subB) {
+      const raw = matchByOffsetHistogram(subA, subB, relaxedSettings, "video-outro");
+      const matches = dedupeMatches(rawToMatches(raw, subA, subB));
+      if (matches.length > 0) {
+        // Pick the match closest to the end of both videos
+        const scored = matches.map((m) => {
+          const distToEnd = Math.min(
+            videoA[0].sourceDuration - m.aEnd,
+            videoB[0].sourceDuration - m.bEnd,
+          );
+          return { m, score: m.confidence * (1 / (1 + distToEnd)) };
+        });
+        scored.sort((a, b) => b.score - a.score);
+        bestMatch = scored[0].m;
+      }
+    }
+  }
+
+  // Try audio if video didn't find anything
+  if (!bestMatch && audioA.length && audioB.length) {
+    const subA = substreamLastN(audioA[0], END_WINDOW);
+    const subB = substreamLastN(audioB[0], END_WINDOW);
+    if (subA && subB) {
+      const raw = matchByOffsetHistogram(subA, subB, relaxedSettings, "audio-outro");
+      const matches = dedupeMatches(rawToMatches(raw, subA, subB));
+      if (matches.length > 0) {
+        const scored = matches.map((m) => {
+          const distToEnd = Math.min(
+            audioA[0].sourceDuration - m.aEnd,
+            audioB[0].sourceDuration - m.bEnd,
+          );
+          return { m, score: m.confidence * (1 / (1 + distToEnd)) };
+        });
+        scored.sort((a, b) => b.score - a.score);
+        bestMatch = scored[0].m;
+      }
+    }
+  }
+
+  return bestMatch;
+}
+
+/** Extract a sub-stream containing only the last N seconds. */
+function substreamLastN(
+  stream: FingerprintStream,
+  n: number,
+): FingerprintStream | null {
+  const len = streamLength(stream);
+  if (len === 0) return null;
+  const duration = stream.sourceDuration;
+  const cutoff = Math.max(0, duration - n);
+  const times = stream.times;
+  let startIdx = 0;
+  for (let i = 0; i < times.length; i++) {
+    if (times[i] >= cutoff) {
+      startIdx = i;
+      break;
+    }
+  }
+  if (startIdx >= len - 1) return null;
+
+  const subLen = len - startIdx;
+  const subTimes = times.subarray(startIdx);
+  const subVectors = stream.vectors.slice(startIdx);
+  const subHashes = stream.hashes
+    ? stream.hashes.subarray(startIdx)
+    : null;
+
+  return {
+    ...stream,
+    times: new Float32Array(subTimes),
+    vectors: subVectors,
+    hashes: subHashes,
+  };
 }
 
 /** Mean color-similarity across the frames inside a match region. */

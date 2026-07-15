@@ -1,6 +1,6 @@
 "use client";
 
-import { Info, Download, Copy, Check } from "lucide-react";
+import { Info, Download, Copy, Check, FileJson } from "lucide-react";
 import { useState } from "react";
 import { useStore } from "@/lib/store";
 import { VideoPreview } from "./video-preview";
@@ -15,49 +15,13 @@ export function ResultsView() {
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
   if (!result) return null;
-  const { introOutro, stats, mode, streamA, streamB } = result;
-
-  // Build the exportable signature — this is the "predefined intro values"
-  // payload that a playback app can load to detect intro/outro in real-time.
-  const signature = {
-    version: "1.0",
-    generatedAt: new Date().toISOString(),
-    mode,
-    sources: {
-      a: { fileName: streamA.fileName, duration: streamA.duration },
-      b: { fileName: streamB.fileName, duration: streamB.duration },
-    },
-    intro: introOutro.intro
-      ? {
-          aStart: introOutro.intro.aStart,
-          aEnd: introOutro.intro.aEnd,
-          bStart: introOutro.intro.bStart,
-          bEnd: introOutro.intro.bEnd,
-          confidence: introOutro.intro.confidence,
-          method: introOutro.intro.method,
-        }
-      : null,
-    outro: introOutro.outro
-      ? {
-          aStart: introOutro.outro.aStart,
-          aEnd: introOutro.outro.aEnd,
-          bStart: introOutro.outro.bStart,
-          bEnd: introOutro.outro.bEnd,
-          confidence: introOutro.outro.confidence,
-          method: introOutro.outro.method,
-        }
-      : null,
-    allMatches: result.matches.map((m) => ({
-      aStart: m.aStart,
-      aEnd: m.aEnd,
-      bStart: m.bStart,
-      bEnd: m.bEnd,
-      confidence: m.confidence,
-      method: m.method,
-    })),
-  };
+  const { introOutro, stats, mode, streamA, streamB, signature } = result;
 
   const downloadSignature = () => {
+    if (!signature) {
+      toast({ title: "No signature available", variant: "destructive" });
+      return;
+    }
     const blob = new Blob([JSON.stringify(signature, null, 2)], {
       type: "application/json",
     });
@@ -67,10 +31,17 @@ export function ResultsView() {
     a.download = `infro-signature-${Date.now()}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    toast({ title: "Signature exported", description: "JSON file downloaded." });
+    toast({
+      title: "Signature exported",
+      description: `${signature.segments.length} segment${signature.segments.length === 1 ? "" : "s"} with full fingerprint data.`,
+    });
   };
 
   const copySignature = async () => {
+    if (!signature) {
+      toast({ title: "No signature available", variant: "destructive" });
+      return;
+    }
     try {
       await navigator.clipboard.writeText(JSON.stringify(signature, null, 2));
       setCopied(true);
@@ -111,9 +82,10 @@ export function ResultsView() {
         </div>
 
         {/* Export signature */}
-        <div className="mt-3 flex items-center gap-2 border-t border-border/50 pt-3">
-          <span className="text-xs text-muted-foreground">
-            Export signature for playback detection:
+        <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border/50 pt-3">
+          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+            <FileJson className="h-3.5 w-3.5" />
+            Export robust signature (with fingerprints) for playback detection:
           </span>
           <Button
             variant="outline"
@@ -137,6 +109,17 @@ export function ResultsView() {
             )}
             {copied ? "Copied" : "Copy"}
           </Button>
+          {signature && (
+            <span className="text-[11px] text-muted-foreground/70">
+              {signature.segments.length} segment
+              {signature.segments.length === 1 ? "" : "s"} ·{" "}
+              {signature.segments.reduce(
+                (s, seg) => s + seg.videoHashes.length + seg.audioChroma.length,
+                0,
+              )}{" "}
+              fingerprints
+            </span>
+          )}
         </div>
       </div>
 

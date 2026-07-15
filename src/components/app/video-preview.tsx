@@ -15,7 +15,7 @@ import {
   Gauge,
 } from "lucide-react";
 import { useStore } from "@/lib/store";
-import { usePlayer, mapTimeAcrossMatches } from "@/lib/player-store";
+import { usePlayer, mapTimeLinked } from "@/lib/player-store";
 import { formatTime } from "@/lib/comparison/format";
 import type { Match } from "@/lib/comparison/types";
 import { cn } from "@/lib/utils";
@@ -91,8 +91,8 @@ export function VideoPreview() {
         );
         a.currentTime = t;
         if (b && linked) {
-          const mapped = mapTimeAcrossMatches(t, "A", matches);
-          if (mapped.inMatch) b.currentTime = mapped.b;
+          const mapped = mapTimeLinked(t, "A", matches);
+          b.currentTime = Math.max(0, Math.min(mapped.b, b.duration || 0));
         }
       }
     },
@@ -264,12 +264,14 @@ function VideoPane({
       if (!v) return;
       const clamped = Math.max(0, Math.min(t, v.duration || t));
       v.currentTime = clamped;
-      // If linked and inside a match, sync the other video
+      // If linked, sync the other video using the dominant offset + match mapping
       if (linked && otherVideoRef.current) {
-        const mapped = mapTimeAcrossMatches(clamped, slot, matches);
-        if (mapped.inMatch) {
-          otherVideoRef.current.currentTime = mapped.b;
-        }
+        const mapped = mapTimeLinked(clamped, slot, matches);
+        const otherTime = slot === "A" ? mapped.b : mapped.a;
+        otherVideoRef.current.currentTime = Math.max(
+          0,
+          Math.min(otherTime, otherVideoRef.current.duration || otherTime),
+        );
       }
     },
     [videoRef, otherVideoRef, linked, slot, matches],
