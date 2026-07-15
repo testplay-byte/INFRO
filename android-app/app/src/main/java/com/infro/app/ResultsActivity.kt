@@ -91,13 +91,8 @@ class ResultsActivity : AppCompatActivity() {
         btnExport.setOnClickListener {
             val sig = result.signature
             if (sig != null) {
-                val json = Gson().toJson(sig)
-                val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
-                    type = "application/json"
-                    putExtra(Intent.EXTRA_TITLE, "infro-signature.json")
-                }
-                saveLauncher.launch(intent)
-                pendingJson = json
+                pendingJson = Gson().toJson(sig)
+                saveLauncher.launch("infro-signature.json")
             }
         }
 
@@ -111,9 +106,10 @@ class ResultsActivity : AppCompatActivity() {
     private val saveLauncher = registerForActivityResult(
         androidx.activity.result.contract.ActivityResultContracts.CreateDocument("application/json")
     ) { uri ->
-        uri?.let {
-            contentResolver.openOutputStream(it)?.use { os ->
-                os.write(pendingJson?.toByteArray() ?: ByteArray(0))
+        val json = pendingJson
+        if (uri != null && json != null) {
+            contentResolver.openOutputStream(uri)?.use { os ->
+                os.write(json.toByteArray())
             }
         }
     }
