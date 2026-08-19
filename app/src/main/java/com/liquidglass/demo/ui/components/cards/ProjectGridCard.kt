@@ -31,13 +31,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.liquidglass.demo.data.models.Project
-import com.liquidglass.demo.ui.components.icons.LiquidCheckIcon
 import com.liquidglass.demo.ui.components.icons.LiquidStarIcon
 import com.liquidglass.demo.ui.core.LiquidPhysics
 import com.liquidglass.demo.ui.core.bouncyClick
 import com.liquidglass.demo.ui.core.liquidGlass
 import com.liquidglass.demo.ui.core.liquidGlassPill
-import com.liquidglass.demo.ui.theme.LiquidYellow
+import com.liquidglass.demo.ui.theme.LiquidYellowBright
 import com.liquidglass.demo.ui.theme.LocalLiquidColors
 import com.liquidglass.demo.ui.theme.LocalLiquidTypography
 
@@ -50,11 +49,12 @@ fun ProjectGridCard(
 ) {
     val colors = LocalLiquidColors.current
     val typography = LocalLiquidTypography.current
+    val isDark = colors.isDarkMode
     var isExpanded by remember { mutableStateOf(false) }
 
     val animatedProgress by animateFloatAsState(
         targetValue = project.progress,
-        animationSpec = LiquidPhysics.BouncySpringSpec,
+        animationSpec = LiquidPhysics.SnappySpringSpec,
         label = "proj_progress"
     )
 
@@ -64,37 +64,32 @@ fun ProjectGridCard(
             .bouncyClick(scaleDown = 0.98f, onClick = { isExpanded = !isExpanded })
             .liquidGlass(
                 shape = RoundedCornerShape(22.dp),
-                elevation = 4.dp,
-                borderWidth = 1.1.dp,
-                backgroundBrush = Brush.verticalGradient(
-                    colors = listOf(
-                        Color.White.copy(alpha = 0.80f),
-                        Color.White.copy(alpha = 0.50f)
-                    )
-                )
+                elevation = 5.dp,
+                borderWidth = 1.2.dp,
+                enableShimmer = false
             )
             .padding(16.dp)
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
-            // Header: Priority / Status Tag + Star Button
+            // Header: Category Pill & Star Button
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Category / Priority Pill
+                // Category Pill
                 Box(
                     modifier = Modifier
                         .liquidGlassPill(
-                            tint = project.accentColor.copy(alpha = 0.12f),
-                            borderColor = project.accentColor.copy(alpha = 0.35f)
+                            tint = project.accentColor.copy(alpha = if (isDark) 0.20f else 0.12f),
+                            borderColor = project.accentColor.copy(alpha = if (isDark) 0.50f else 0.35f)
                         )
                         .padding(horizontal = 10.dp, vertical = 4.dp)
                 ) {
                     Text(
                         text = project.category.label.uppercase(),
                         style = typography.labelSmall.copy(
-                            color = project.accentColor,
+                            color = if (isDark) Color.White else project.accentColor,
                             fontSize = 9.5.sp,
                             fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
                         )
@@ -114,7 +109,7 @@ fun ProjectGridCard(
                     contentAlignment = Alignment.Center
                 ) {
                     LiquidStarIcon(
-                        color = if (isStarred) LiquidYellow else colors.textTertiary,
+                        color = if (isStarred) LiquidYellowBright else colors.textTertiary,
                         isFilled = isStarred,
                         modifier = Modifier.size(16.dp)
                     )
@@ -126,28 +121,28 @@ fun ProjectGridCard(
             // Project Title
             Text(
                 text = project.title,
-                style = typography.titleLarge.copy(fontSize = 17.sp)
+                style = typography.titleLarge
             )
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            // Short Description
+            // Description
             Text(
                 text = project.description,
-                style = typography.bodyMedium.copy(fontSize = 12.5.sp),
+                style = typography.bodyMedium.copy(color = colors.textSecondary),
                 maxLines = if (isExpanded) Int.MAX_VALUE else 2
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Progress Bar & Counter
+            // Tasks Metric & Progress %
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "${project.tasksCompleted}/${project.totalTasks} Tasks",
+                    text = "${project.tasksCompleted}/${project.totalTasks} Tasks Completed",
                     style = typography.labelSmall.copy(color = colors.textSecondary)
                 )
                 Text(
@@ -167,7 +162,7 @@ fun ProjectGridCard(
                     .fillMaxWidth()
                     .height(6.dp)
                     .clip(RoundedCornerShape(50))
-                    .background(Color.White.copy(alpha = 0.55f))
+                    .background(if (isDark) Color.White.copy(alpha = 0.12f) else Color.White.copy(alpha = 0.55f))
             ) {
                 Box(
                     modifier = Modifier
@@ -178,14 +173,14 @@ fun ProjectGridCard(
                 )
             }
 
-            // Expandable details (Tags & Team)
+            // Expandable details (Tag chips & Team Lead)
             AnimatedVisibility(
                 visible = isExpanded,
                 enter = fadeIn(animationSpec = LiquidPhysics.FluidEnterSpec),
                 exit = fadeOut(animationSpec = LiquidPhysics.FluidEnterSpec)
             ) {
                 Column(modifier = Modifier.padding(top = 12.dp)) {
-                    // Tag Chips
+                    // Tag Chips Row
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                         modifier = Modifier.fillMaxWidth()
@@ -194,8 +189,8 @@ fun ProjectGridCard(
                             Box(
                                 modifier = Modifier
                                     .liquidGlassPill(
-                                        tint = Color.White.copy(alpha = 0.6f),
-                                        borderColor = Color.White.copy(alpha = 0.8f)
+                                        tint = if (isDark) Color.White.copy(alpha = 0.08f) else Color.White.copy(alpha = 0.60f),
+                                        borderColor = if (isDark) Color.White.copy(alpha = 0.20f) else Color.White.copy(alpha = 0.80f)
                                     )
                                     .padding(horizontal = 8.dp, vertical = 3.dp)
                             ) {

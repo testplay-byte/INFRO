@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -18,7 +19,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.liquidglass.demo.ui.components.background.AnimatedLiquidCanvas
+import com.liquidglass.demo.ui.components.common.BottomScrollFadeMask
+import com.liquidglass.demo.ui.components.common.TopScrollFadeMask
 import com.liquidglass.demo.ui.components.dialogs.QuickCreateModal
 import com.liquidglass.demo.ui.components.drawer.LiquidDrawerMenu
 import com.liquidglass.demo.ui.components.navigation.LiquidBottomDock
@@ -32,21 +36,20 @@ fun MainScaffoldScreen() {
 
     val screenTitle = when (selectedTab) {
         0 -> "Projects"
-        1 -> "Analytics"
+        1 -> "Telemetry"
         2 -> "Workspace"
         else -> "Projects"
     }
 
     val screenSubtitle = when (selectedTab) {
         0 -> "Liquid Pipeline"
-        1 -> "Live Telemetry"
+        1 -> "Live Metrics"
         2 -> "Canvas Notes"
         else -> "Liquid Studio"
     }
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
+        modifier = Modifier.fillMaxSize()
     ) {
         // Layer 1: Animated Refractive Liquid Canvas Background
         AnimatedLiquidCanvas()
@@ -57,16 +60,15 @@ fun MainScaffoldScreen() {
                 .fillMaxSize()
                 .statusBarsPadding()
         ) {
-            // Liquid Top Header Bar with Circular 3-Line Menu Button
+            // Liquid Top Header Bar with Circular 3-Line Menu & Theme Switch
             LiquidHeaderBar(
                 title = screenTitle,
                 subtitle = screenSubtitle,
                 onMenuClick = { isDrawerOpen = true },
-                onSearchClick = { /* Search trigger */ },
-                onNotificationClick = { /* Notification trigger */ }
+                onNotificationClick = { /* Notification action */ }
             )
 
-            // Animated Screen Switching
+            // Animated Screen Switching Area
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -87,6 +89,18 @@ fun MainScaffoldScreen() {
                         )
                     }
                 }
+
+                // Top Scroll Gradient Fade Mask
+                TopScrollFadeMask(
+                    height = 24.dp,
+                    modifier = Modifier.align(Alignment.TopCenter)
+                )
+
+                // Bottom Scroll Gradient Fade Mask
+                BottomScrollFadeMask(
+                    height = 88.dp,
+                    modifier = Modifier.align(Alignment.BottomCenter)
+                )
             }
         }
 
@@ -101,11 +115,11 @@ fun MainScaffoldScreen() {
                 .navigationBarsPadding()
         )
 
-        // Layer 4: Quick Create Modal Dialog
+        // Layer 4: Quick Create Modal Sheet
         QuickCreateModal(
             isOpen = isQuickCreateOpen,
             onDismiss = { isQuickCreateOpen = false },
-            onOptionSelected = { /* Action handling */ }
+            onOptionSelected = { /* Handle action */ }
         )
 
         // Layer 5: Liquid Sidebar / Drawer

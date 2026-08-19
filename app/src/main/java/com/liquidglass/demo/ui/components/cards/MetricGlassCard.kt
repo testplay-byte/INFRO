@@ -10,15 +10,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -40,20 +37,15 @@ fun MetricGlassCard(
 ) {
     val colors = LocalLiquidColors.current
     val typography = LocalLiquidTypography.current
+    val isDark = colors.isDarkMode
 
     Box(
         modifier = modifier
             .bouncyClick(scaleDown = 0.96f, onClick = {})
             .liquidGlass(
                 shape = RoundedCornerShape(20.dp),
-                elevation = 3.dp,
-                borderWidth = 1.dp,
-                backgroundBrush = Brush.verticalGradient(
-                    colors = listOf(
-                        Color.White.copy(alpha = 0.82f),
-                        Color.White.copy(alpha = 0.50f)
-                    )
-                )
+                elevation = 4.dp,
+                borderWidth = 1.1.dp
             )
             .padding(14.dp)
     ) {
@@ -68,7 +60,7 @@ fun MetricGlassCard(
                     modifier = Modifier
                         .size(34.dp)
                         .clip(RoundedCornerShape(10.dp))
-                        .background(stat.accentColor.copy(alpha = 0.15f)),
+                        .background(stat.accentColor.copy(alpha = if (isDark) 0.25f else 0.15f)),
                     contentAlignment = Alignment.Center
                 ) {
                     when (stat.iconType) {
@@ -94,7 +86,7 @@ fun MetricGlassCard(
                     }
                 }
 
-                // Change pill
+                // Change indicator
                 Text(
                     text = stat.changeText,
                     style = typography.labelSmall.copy(
@@ -109,7 +101,7 @@ fun MetricGlassCard(
 
             Text(
                 text = stat.value,
-                style = typography.displayMedium.copy(fontSize = 20.sp)
+                style = typography.displayMedium.copy(fontSize = 19.sp)
             )
 
             Text(

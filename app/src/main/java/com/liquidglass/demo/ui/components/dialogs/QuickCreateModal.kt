@@ -35,14 +35,13 @@ import androidx.compose.ui.unit.sp
 import com.liquidglass.demo.ui.components.icons.LiquidAnalyticsIcon
 import com.liquidglass.demo.ui.components.icons.LiquidCloseIcon
 import com.liquidglass.demo.ui.components.icons.LiquidFolderIcon
-import com.liquidglass.demo.ui.components.icons.LiquidPlusIcon
 import com.liquidglass.demo.ui.components.icons.LiquidWorkspaceIcon
 import com.liquidglass.demo.ui.core.LiquidPhysics
 import com.liquidglass.demo.ui.core.bouncyClick
 import com.liquidglass.demo.ui.core.liquidGlass
-import com.liquidglass.demo.ui.theme.LiquidBlue
-import com.liquidglass.demo.ui.theme.LiquidRed
-import com.liquidglass.demo.ui.theme.LiquidYellow
+import com.liquidglass.demo.ui.theme.LiquidBlueBright
+import com.liquidglass.demo.ui.theme.LiquidRedBright
+import com.liquidglass.demo.ui.theme.LiquidYellowBright
 import com.liquidglass.demo.ui.theme.LocalLiquidColors
 import com.liquidglass.demo.ui.theme.LocalLiquidTypography
 
@@ -55,7 +54,7 @@ fun QuickCreateModal(
 ) {
     val colors = LocalLiquidColors.current
     val typography = LocalLiquidTypography.current
-    val accent = colors.activeAccent
+    val isDark = colors.isDarkMode
 
     AnimatedVisibility(
         visible = isOpen,
@@ -65,7 +64,7 @@ fun QuickCreateModal(
         Box(
             modifier = modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.35f))
+                .background(Color.Black.copy(alpha = if (isDark) 0.65f else 0.40f))
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
@@ -77,7 +76,7 @@ fun QuickCreateModal(
                 visible = isOpen,
                 enter = scaleIn(
                     initialScale = 0.88f,
-                    animationSpec = LiquidPhysics.BouncySpringSpec
+                    animationSpec = LiquidPhysics.SnappySpringSpec
                 ),
                 exit = scaleOut(
                     targetScale = 0.88f,
@@ -87,7 +86,7 @@ fun QuickCreateModal(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 32.dp)
+                        .padding(horizontal = 20.dp, vertical = 28.dp)
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
@@ -95,16 +94,11 @@ fun QuickCreateModal(
                         )
                         .liquidGlass(
                             shape = RoundedCornerShape(32.dp),
-                            elevation = 20.dp,
+                            elevation = 24.dp,
                             borderWidth = 1.5.dp,
-                            backgroundBrush = Brush.verticalGradient(
-                                colors = listOf(
-                                    Color.White.copy(alpha = 0.95f),
-                                    Color.White.copy(alpha = 0.82f)
-                                )
-                            )
+                            enableShimmer = true
                         )
-                        .padding(24.dp)
+                        .padding(22.dp)
                 ) {
                     Column(modifier = Modifier.fillMaxWidth()) {
                         // Modal Header
@@ -119,7 +113,7 @@ fun QuickCreateModal(
                                     style = typography.titleLarge
                                 )
                                 Text(
-                                    text = "Choose an item to generate in liquid space",
+                                    text = "Generate optical liquid space components",
                                     style = typography.bodyMedium.copy(color = colors.textTertiary)
                                 )
                             }
@@ -139,13 +133,13 @@ fun QuickCreateModal(
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(20.dp))
+                        Spacer(modifier = Modifier.height(18.dp))
 
-                        // Action Options
+                        // Action Tiles
                         QuickCreateTile(
-                            title = "New Liquid Project",
+                            title = "New Liquid Pipeline",
                             subtitle = "Configure shaders, canvas layers & physics",
-                            accentColor = LiquidBlue,
+                            accentColor = LiquidBlueBright,
                             icon = { LiquidFolderIcon(color = Color.White, isFilled = true) },
                             onClick = {
                                 onOptionSelected("New Project")
@@ -158,7 +152,7 @@ fun QuickCreateModal(
                         QuickCreateTile(
                             title = "Add Sprint Milestone",
                             subtitle = "Schedule velocity deadlines & objectives",
-                            accentColor = LiquidYellow,
+                            accentColor = LiquidYellowBright,
                             icon = { LiquidAnalyticsIcon(color = Color.White, isFilled = true) },
                             onClick = {
                                 onOptionSelected("New Milestone")
@@ -171,7 +165,7 @@ fun QuickCreateModal(
                         QuickCreateTile(
                             title = "Glass Canvas Note",
                             subtitle = "Place a translucent note on workspace canvas",
-                            accentColor = LiquidRed,
+                            accentColor = LiquidRedBright,
                             icon = { LiquidWorkspaceIcon(color = Color.White, isFilled = true) },
                             onClick = {
                                 onOptionSelected("New Glass Note")
@@ -195,6 +189,7 @@ private fun QuickCreateTile(
 ) {
     val colors = LocalLiquidColors.current
     val typography = LocalLiquidTypography.current
+    val isDark = colors.isDarkMode
 
     Box(
         modifier = Modifier
@@ -203,11 +198,11 @@ private fun QuickCreateTile(
             .liquidGlass(
                 shape = RoundedCornerShape(20.dp),
                 elevation = 2.dp,
-                borderWidth = 1.dp,
+                borderWidth = 1.1.dp,
                 backgroundBrush = Brush.horizontalGradient(
                     colors = listOf(
-                        accentColor.copy(alpha = 0.08f),
-                        Color.White.copy(alpha = 0.65f)
+                        accentColor.copy(alpha = if (isDark) 0.18f else 0.10f),
+                        (if (isDark) Color(0xFF1E293B) else Color.White).copy(alpha = 0.65f)
                     )
                 )
             )
@@ -229,7 +224,7 @@ private fun QuickCreateTile(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
-                    style = typography.titleMedium.copy(fontSize = 15.sp)
+                    style = typography.titleMedium.copy(fontSize = 14.5.sp)
                 )
                 Text(
                     text = subtitle,

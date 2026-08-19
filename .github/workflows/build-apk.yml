@@ -39,7 +39,7 @@ jobs:
       - name: Upload APK as Workflow Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: LiquidGlass-Demo-APK
+          name: LiquidGlass-Demo-v2-APK
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
@@ -48,22 +48,23 @@ jobs:
         if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.0.0
-          name: "Liquid Glass Demo v1.0.0"
+          tag_name: v2.0.0
+          name: "Liquid Glass Demo v2.0.0 (Optical Refraction & Dark Mode)"
           body: |
-            ### 🌊 Liquid Glass Android Application Demo v1.0.0
+            ### 🌊 Liquid Glass Android Application Demo v2.0.0
             
-            This release contains the compiled APK for the modern liquid glass-inspired Android demo.
+            This release features a complete overhaul of the Liquid Glass design language, optical refraction physics, full Dark/Light theme switching, and fluid motion.
             
-            #### Features:
-            - **Liquid Glass Design System**: Frosted glass surfaces, specular borders, and fluid spring physics.
-            - **Dynamic Animated Canvas**: Luminous refraction blobs with interactive Blue, Yellow, and Red accents.
-            - **Circular 3-Line Menu**: Glass top bar triggering the sliding liquid drawer.
-            - **Floating Central Nav Bar**: 3-option pill with responsive spring expansion on active tabs.
-            - **Floating (+) Action Button**: Dedicated glowing button with Quick Creation modal.
-            - **Zero Material 3 Look & Zero Emojis**: Custom vector icons and bespoke composables.
+            #### ✨ Key Updates:
+            - **Deep Optical Liquid Glass Refraction**: Multi-pass specular edge highlights, curved glass caustics, and animated liquid light shimmers.
+            - **Full Dark & Light Mode**: Deep Obsidian Dark Mode (`#070B12` with glowing crystal glass) + Iridescent Frost Light Mode.
+            - **Top & Bottom Scroll Fade Masks**: Smooth gradient blur transitions dissolving scrolling content seamlessly.
+            - **Revamped Floating Navigation Dock**: High-contrast text readability, active glowing pill indicator, and glowing floating (+) action button.
+            - **Rich Fluid Animations**: Kinetic spring overshoot, staggered entrance animations, and interactive touch ripples.
+            - **Redesigned Workspace Canvas**: Live note creation, tag filters, completion toggles, and clean spacious layout.
+            - **Zero Material 3 & Zero Emojis**: 100% custom vector icons and bespoke composables.
             
-            #### Download APK:
+            #### 📲 Download APK:
             Download `app-debug.apk` below and install on any Android device running Android 8.0+ (API 26+).
           files: app/build/outputs/apk/debug/app-debug.apk
         env:

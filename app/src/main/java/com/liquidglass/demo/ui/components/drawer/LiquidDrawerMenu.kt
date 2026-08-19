@@ -38,24 +38,18 @@ import androidx.compose.ui.unit.sp
 import com.liquidglass.demo.ui.components.icons.LiquidAnalyticsIcon
 import com.liquidglass.demo.ui.components.icons.LiquidCloseIcon
 import com.liquidglass.demo.ui.components.icons.LiquidFolderIcon
+import com.liquidglass.demo.ui.components.icons.LiquidThemeModeIcon
 import com.liquidglass.demo.ui.components.icons.LiquidWorkspaceIcon
 import com.liquidglass.demo.ui.core.bouncyClick
 import com.liquidglass.demo.ui.core.liquidGlass
 import com.liquidglass.demo.ui.core.liquidGlassPill
 import com.liquidglass.demo.ui.theme.AccentTheme
-import com.liquidglass.demo.ui.theme.LiquidBlue
-import com.liquidglass.demo.ui.theme.LiquidRed
-import com.liquidglass.demo.ui.theme.LiquidYellow
+import com.liquidglass.demo.ui.theme.LiquidBlueBright
+import com.liquidglass.demo.ui.theme.LiquidRedBright
+import com.liquidglass.demo.ui.theme.LiquidYellowBright
 import com.liquidglass.demo.ui.theme.LocalLiquidColors
 import com.liquidglass.demo.ui.theme.LocalLiquidThemeController
 import com.liquidglass.demo.ui.theme.LocalLiquidTypography
-
-enum class DrawerDestination(val title: String) {
-    PROJECTS("Projects"),
-    ANALYTICS("Analytics"),
-    WORKSPACE("Workspace"),
-    SETTINGS("Settings")
-}
 
 @Composable
 fun LiquidDrawerMenu(
@@ -69,6 +63,7 @@ fun LiquidDrawerMenu(
     val typography = LocalLiquidTypography.current
     val themeController = LocalLiquidThemeController.current
     val activeAccent = colors.activeAccent
+    val isDark = colors.isDarkMode
 
     AnimatedVisibility(
         visible = isOpen,
@@ -78,14 +73,14 @@ fun LiquidDrawerMenu(
         Box(
             modifier = modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.35f))
+                .background(Color.Black.copy(alpha = if (isDark) 0.60f else 0.35f))
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
                     onClick = onClose
                 )
         ) {
-            // Sliding Glass Drawer Container
+            // Sliding Glass Container
             AnimatedVisibility(
                 visible = isOpen,
                 enter = slideInHorizontally(
@@ -100,22 +95,17 @@ fun LiquidDrawerMenu(
                 Box(
                     modifier = Modifier
                         .fillMaxHeight()
-                        .width(310.dp)
+                        .width(315.dp)
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
-                            onClick = {} // Intercept clicks
+                            onClick = {}
                         )
                         .liquidGlass(
                             shape = RoundedCornerShape(topEnd = 32.dp, bottomEnd = 32.dp),
-                            elevation = 16.dp,
+                            elevation = 20.dp,
                             borderWidth = 1.5.dp,
-                            backgroundBrush = Brush.horizontalGradient(
-                                colors = listOf(
-                                    Color.White.copy(alpha = 0.92f),
-                                    Color.White.copy(alpha = 0.78f)
-                                )
-                            )
+                            enableShimmer = true
                         )
                         .padding(horizontal = 22.dp, vertical = 28.dp)
                 ) {
@@ -124,14 +114,13 @@ fun LiquidDrawerMenu(
                             .fillMaxSize()
                             .verticalScroll(rememberScrollState())
                     ) {
-                        // Drawer Header with Close Button
+                        // Drawer Header with Avatar & Close Button
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                // Profile Avatar
                                 Box(
                                     modifier = Modifier
                                         .size(46.dp)
@@ -154,7 +143,7 @@ fun LiquidDrawerMenu(
                                         style = typography.titleMedium
                                     )
                                     Text(
-                                        text = "v1.0 • Modern Glass",
+                                        text = if (isDark) "Obsidian Mode" else "Frost Mode",
                                         style = typography.labelSmall.copy(color = colors.textTertiary)
                                     )
                                 }
@@ -176,11 +165,97 @@ fun LiquidDrawerMenu(
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(24.dp))
+                        Spacer(modifier = Modifier.height(22.dp))
 
-                        // Liquid Accent Color Switcher Card
+                        // Theme Mode Segmented Switcher (Dark / Light)
                         Text(
-                            text = "ACCENT THEME",
+                            text = "APPEARANCE",
+                            style = typography.labelSmall.copy(
+                                color = colors.textTertiary,
+                                letterSpacing = 1.2.sp
+                            )
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .liquidGlass(
+                                    shape = RoundedCornerShape(16.dp),
+                                    elevation = 2.dp,
+                                    borderWidth = 1.dp
+                                )
+                                .padding(4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            // Light Mode Button
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .bouncyClick(onClick = { themeController.setDarkMode(false) })
+                                    .then(
+                                        if (!isDark) {
+                                            Modifier.liquidGlassPill(
+                                                shape = RoundedCornerShape(12.dp),
+                                                tint = activeAccent.primary.copy(alpha = 0.20f),
+                                                borderColor = activeAccent.bright,
+                                                borderWidth = 1.2.dp
+                                            )
+                                        } else Modifier
+                                    )
+                                    .padding(vertical = 8.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    LiquidThemeModeIcon(isDark = false, color = if (!isDark) activeAccent.bright else colors.textSecondary)
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = "Light",
+                                        style = typography.labelSmall.copy(
+                                            color = if (!isDark) activeAccent.bright else colors.textSecondary,
+                                            fontWeight = if (!isDark) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Normal
+                                        )
+                                    )
+                                }
+                            }
+
+                            // Dark Mode Button
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .bouncyClick(onClick = { themeController.setDarkMode(true) })
+                                    .then(
+                                        if (isDark) {
+                                            Modifier.liquidGlassPill(
+                                                shape = RoundedCornerShape(12.dp),
+                                                tint = activeAccent.primary.copy(alpha = 0.25f),
+                                                borderColor = activeAccent.bright,
+                                                borderWidth = 1.2.dp
+                                            )
+                                        } else Modifier
+                                    )
+                                    .padding(vertical = 8.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    LiquidThemeModeIcon(isDark = true, color = if (isDark) activeAccent.neon else colors.textSecondary)
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = "Dark",
+                                        style = typography.labelSmall.copy(
+                                            color = if (isDark) activeAccent.neon else colors.textSecondary,
+                                            fontWeight = if (isDark) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Normal
+                                        )
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        // Liquid Accent Color Switcher
+                        Text(
+                            text = "ACCENT REFLECTION",
                             style = typography.labelSmall.copy(
                                 color = colors.textTertiary,
                                 letterSpacing = 1.2.sp
@@ -199,32 +274,29 @@ fun LiquidDrawerMenu(
                                 .padding(8.dp),
                             horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
-                            // Blue Pill
                             AccentSelectorButton(
                                 label = "Blue",
-                                color = LiquidBlue,
+                                color = LiquidBlueBright,
                                 isSelected = activeAccent == AccentTheme.BLUE,
                                 onClick = { themeController.updateAccent(AccentTheme.BLUE) }
                             )
-                            // Yellow Pill
                             AccentSelectorButton(
                                 label = "Yellow",
-                                color = LiquidYellow,
+                                color = LiquidYellowBright,
                                 isSelected = activeAccent == AccentTheme.YELLOW,
                                 onClick = { themeController.updateAccent(AccentTheme.YELLOW) }
                             )
-                            // Red Pill
                             AccentSelectorButton(
                                 label = "Red",
-                                color = LiquidRed,
+                                color = LiquidRedBright,
                                 isSelected = activeAccent == AccentTheme.RED,
                                 onClick = { themeController.updateAccent(AccentTheme.RED) }
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(28.dp))
+                        Spacer(modifier = Modifier.height(24.dp))
 
-                        // Navigation Items
+                        // Navigation Destinations
                         Text(
                             text = "NAVIGATION",
                             style = typography.labelSmall.copy(
@@ -236,12 +308,12 @@ fun LiquidDrawerMenu(
 
                         DrawerNavItem(
                             title = "Projects Hub",
-                            subtitle = "6 Active projects",
+                            subtitle = "6 Active pipelines",
                             isSelected = currentTab == 0,
-                            accentColor = activeAccent.primary,
+                            accentColor = activeAccent.bright,
                             icon = { isSel ->
                                 LiquidFolderIcon(
-                                    color = if (isSel) activeAccent.primary else colors.textPrimary,
+                                    color = if (isSel) activeAccent.bright else colors.textPrimary,
                                     isFilled = isSel
                                 )
                             },
@@ -254,13 +326,13 @@ fun LiquidDrawerMenu(
                         Spacer(modifier = Modifier.height(8.dp))
 
                         DrawerNavItem(
-                            title = "Analytics & Stats",
+                            title = "Telemetry & Stats",
                             subtitle = "Performance metrics",
                             isSelected = currentTab == 1,
-                            accentColor = activeAccent.primary,
+                            accentColor = activeAccent.bright,
                             icon = { isSel ->
                                 LiquidAnalyticsIcon(
-                                    color = if (isSel) activeAccent.primary else colors.textPrimary,
+                                    color = if (isSel) activeAccent.bright else colors.textPrimary,
                                     isFilled = isSel
                                 )
                             },
@@ -274,12 +346,12 @@ fun LiquidDrawerMenu(
 
                         DrawerNavItem(
                             title = "Liquid Workspace",
-                            subtitle = "Interactive notes & boards",
+                            subtitle = "Interactive glass notes",
                             isSelected = currentTab == 2,
-                            accentColor = activeAccent.primary,
+                            accentColor = activeAccent.bright,
                             icon = { isSel ->
                                 LiquidWorkspaceIcon(
-                                    color = if (isSel) activeAccent.primary else colors.textPrimary,
+                                    color = if (isSel) activeAccent.bright else colors.textPrimary,
                                     isFilled = isSel
                                 )
                             },
@@ -292,32 +364,26 @@ fun LiquidDrawerMenu(
                         Spacer(modifier = Modifier.weight(1f))
                         Spacer(modifier = Modifier.height(24.dp))
 
-                        // Bottom Info Card
+                        // Engine Badge Card
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .liquidGlass(
                                     shape = RoundedCornerShape(16.dp),
                                     elevation = 2.dp,
-                                    borderWidth = 1.dp,
-                                    backgroundBrush = Brush.verticalGradient(
-                                        colors = listOf(
-                                            activeAccent.primary.copy(alpha = 0.08f),
-                                            Color.White.copy(alpha = 0.40f)
-                                        )
-                                    )
+                                    borderWidth = 1.dp
                                 )
                                 .padding(14.dp)
                         ) {
                             Column {
                                 Text(
-                                    text = "Liquid Glass Engine",
-                                    style = typography.titleMedium.copy(fontSize = 14.sp)
+                                    text = "Liquid Glass Engine 2.0",
+                                    style = typography.titleMedium.copy(fontSize = 13.5.sp)
                                 )
-                                Spacer(modifier = Modifier.height(4.dp))
+                                Spacer(modifier = Modifier.height(3.dp))
                                 Text(
-                                    text = "Custom-built without Material 3 components. Dynamic spring physics enabled.",
-                                    style = typography.bodyMedium.copy(fontSize = 12.sp)
+                                    text = "Optical refraction caustics, multi-pass specular highlights & obsidian crystal.",
+                                    style = typography.bodyMedium.copy(fontSize = 11.5.sp, color = colors.textSecondary)
                                 )
                             }
                         }
@@ -335,29 +401,32 @@ private fun AccentSelectorButton(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
+    val colors = LocalLiquidColors.current
+    val typography = LocalLiquidTypography.current
+
     Box(
         modifier = Modifier
             .bouncyClick(onClick = onClick)
             .liquidGlassPill(
-                tint = if (isSelected) color.copy(alpha = 0.20f) else Color.White.copy(alpha = 0.35f),
-                borderColor = if (isSelected) color else Color.White.copy(alpha = 0.6f)
+                tint = if (isSelected) color.copy(alpha = 0.22f) else Color.White.copy(alpha = if (colors.isDarkMode) 0.08f else 0.35f),
+                borderColor = if (isSelected) color else Color.White.copy(alpha = if (colors.isDarkMode) 0.20f else 0.60f)
             )
-            .padding(horizontal = 14.dp, vertical = 8.dp),
+            .padding(horizontal = 14.dp, vertical = 7.dp),
         contentAlignment = Alignment.Center
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
                 modifier = Modifier
-                    .size(10.dp)
+                    .size(9.dp)
                     .clip(CircleShape)
                     .background(color)
             )
             Spacer(modifier = Modifier.width(6.dp))
             Text(
                 text = label,
-                style = LocalLiquidTypography.current.labelSmall.copy(
-                    color = if (isSelected) color else LocalLiquidColors.current.textSecondary,
-                    fontWeight = if (isSelected) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Medium
+                style = typography.labelSmall.copy(
+                    color = if (isSelected) color else colors.textSecondary,
+                    fontWeight = if (isSelected) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Normal
                 )
             )
         }
@@ -387,31 +456,22 @@ private fun DrawerNavItem(
                 backgroundBrush = if (isSelected) {
                     Brush.horizontalGradient(
                         colors = listOf(
-                            accentColor.copy(alpha = 0.18f),
-                            Color.White.copy(alpha = 0.70f)
+                            accentColor.copy(alpha = if (colors.isDarkMode) 0.25f else 0.18f),
+                            (if (colors.isDarkMode) Color(0xFF1E293B) else Color.White).copy(alpha = 0.65f)
                         )
                     )
-                } else {
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Color.White.copy(alpha = 0.50f),
-                            Color.White.copy(alpha = 0.25f)
-                        )
-                    )
-                }
+                } else null
             )
-            .padding(horizontal = 14.dp, vertical = 12.dp)
+            .padding(horizontal = 14.dp, vertical = 11.dp)
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
                 modifier = Modifier
                     .size(38.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(
-                        if (isSelected) accentColor.copy(alpha = 0.15f)
-                        else Color.White.copy(alpha = 0.6f)
+                        if (isSelected) accentColor.copy(alpha = 0.20f)
+                        else (if (colors.isDarkMode) Color.White.copy(alpha = 0.08f) else Color.White.copy(alpha = 0.50f))
                     ),
                 contentAlignment = Alignment.Center
             ) {
@@ -425,7 +485,7 @@ private fun DrawerNavItem(
                     text = title,
                     style = typography.titleMedium.copy(
                         color = if (isSelected) accentColor else colors.textPrimary,
-                        fontSize = 14.sp
+                        fontSize = 13.5.sp
                     )
                 )
                 Text(

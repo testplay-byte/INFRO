@@ -24,7 +24,7 @@ fun LiquidBottomDock(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(start = 20.dp, end = 20.dp, bottom = 24.dp),
+            .padding(start = 20.dp, end = 20.dp, bottom = 20.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {

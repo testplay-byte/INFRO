@@ -30,9 +30,7 @@ import com.liquidglass.demo.ui.core.LiquidPhysics
 import com.liquidglass.demo.ui.core.bouncyClick
 import com.liquidglass.demo.ui.core.liquidGlass
 import com.liquidglass.demo.ui.core.liquidGlassPill
-import com.liquidglass.demo.ui.core.liquidGlow
-import com.liquidglass.demo.ui.theme.LiquidBlue
-import com.liquidglass.demo.ui.theme.LiquidYellow
+import com.liquidglass.demo.ui.theme.LiquidYellowBright
 import com.liquidglass.demo.ui.theme.LocalLiquidColors
 import com.liquidglass.demo.ui.theme.LocalLiquidTypography
 
@@ -46,40 +44,28 @@ fun HeroProjectCard(
 ) {
     val colors = LocalLiquidColors.current
     val typography = LocalLiquidTypography.current
-    val accent = colors.activeAccent
+    val isDark = colors.isDarkMode
 
     val animatedProgress by animateFloatAsState(
         targetValue = project.progress,
-        animationSpec = LiquidPhysics.BouncySpringSpec,
+        animationSpec = LiquidPhysics.SnappySpringSpec,
         label = "hero_progress"
     )
 
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .liquidGlow(
-                color = project.accentColor,
-                radius = 16.dp,
-                alpha = 0.20f,
-                offsetY = 6.dp
-            )
             .bouncyClick(scaleDown = 0.98f, onClick = onClick)
             .liquidGlass(
                 shape = RoundedCornerShape(28.dp),
-                elevation = 8.dp,
-                borderWidth = 1.3.dp,
-                backgroundBrush = Brush.verticalGradient(
-                    colors = listOf(
-                        Color.White.copy(alpha = 0.88f),
-                        Color.White.copy(alpha = 0.65f),
-                        project.accentColor.copy(alpha = 0.08f)
-                    )
-                )
+                elevation = 10.dp,
+                borderWidth = 1.4.dp,
+                enableShimmer = true
             )
             .padding(20.dp)
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
-            // Top Row: Featured Badge + Star Action
+            // Top Row: Featured Pill & Star Glass Button
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -90,15 +76,15 @@ fun HeroProjectCard(
                     modifier = Modifier
                         .liquidGlassPill(
                             shape = RoundedCornerShape(50),
-                            tint = project.accentColor.copy(alpha = 0.15f),
-                            borderColor = project.accentColor.copy(alpha = 0.40f)
+                            tint = project.accentColor.copy(alpha = if (isDark) 0.25f else 0.15f),
+                            borderColor = project.accentColor.copy(alpha = if (isDark) 0.60f else 0.40f)
                         )
                         .padding(horizontal = 12.dp, vertical = 6.dp)
                 ) {
                     Text(
                         text = "FEATURED PIPELINE",
                         style = typography.labelSmall.copy(
-                            color = project.accentColor,
+                            color = if (isDark) Color.White else project.accentColor,
                             letterSpacing = 1.sp,
                             fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
                         )
@@ -118,7 +104,7 @@ fun HeroProjectCard(
                     contentAlignment = Alignment.Center
                 ) {
                     LiquidStarIcon(
-                        color = if (isStarred) LiquidYellow else colors.textTertiary,
+                        color = if (isStarred) LiquidYellowBright else colors.textTertiary,
                         isFilled = isStarred
                     )
                 }
@@ -129,17 +115,17 @@ fun HeroProjectCard(
             // Project Title & Description
             Text(
                 text = project.title,
-                style = typography.displayMedium.copy(fontSize = 20.sp)
+                style = typography.displayMedium
             )
             Spacer(modifier = Modifier.height(6.dp))
             Text(
                 text = project.description,
-                style = typography.bodyMedium
+                style = typography.bodyMedium.copy(color = colors.textSecondary)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Progress Header & Liquid Progress Bar
+            // Progress Header & Track
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -152,7 +138,7 @@ fun HeroProjectCard(
                 Text(
                     text = "${(animatedProgress * 100).toInt()}%",
                     style = typography.labelLarge.copy(
-                        color = project.accentColor,
+                        color = if (isDark) project.accentColor else project.accentColor,
                         fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
                     )
                 )
@@ -160,13 +146,13 @@ fun HeroProjectCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Custom Glass Track Progress Bar
+            // Glass Progress Track
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp)
                     .clip(RoundedCornerShape(50))
-                    .background(Color.White.copy(alpha = 0.6f))
+                    .background(if (isDark) Color.White.copy(alpha = 0.12f) else Color.White.copy(alpha = 0.60f))
             ) {
                 Box(
                     modifier = Modifier
@@ -183,18 +169,17 @@ fun HeroProjectCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Footer: Team Member Avatars + Due Date
+            // Footer: Team Avatars & Due Date
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Team Avatar Stack
+                // Team Avatars Stack
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     project.team.take(3).forEachIndexed { index, member ->
                         Box(
                             modifier = Modifier
-                                .padding(start = if (index > 0) 0.dp else 0.dp)
                                 .size(28.dp)
                                 .clip(CircleShape)
                                 .background(member.accentColor),
@@ -204,7 +189,7 @@ fun HeroProjectCard(
                                 text = member.initials,
                                 style = typography.labelSmall.copy(
                                     color = Color.White,
-                                    fontSize = 9.sp,
+                                    fontSize = 9.5.sp,
                                     fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
                                 )
                             )
@@ -212,7 +197,7 @@ fun HeroProjectCard(
                         if (index < 2) Spacer(modifier = Modifier.width(4.dp))
                     }
                     if (project.team.size > 3) {
-                        Spacer(modifier = Modifier.width(4.dp))
+                        Spacer(modifier = Modifier.width(5.dp))
                         Text(
                             text = "+${project.team.size - 3}",
                             style = typography.labelSmall.copy(color = colors.textTertiary)
@@ -224,8 +209,8 @@ fun HeroProjectCard(
                 Box(
                     modifier = Modifier
                         .liquidGlassPill(
-                            tint = Color.White.copy(alpha = 0.5f),
-                            borderColor = Color.White.copy(alpha = 0.7f)
+                            tint = if (isDark) Color.White.copy(alpha = 0.08f) else Color.White.copy(alpha = 0.50f),
+                            borderColor = if (isDark) Color.White.copy(alpha = 0.20f) else Color.White.copy(alpha = 0.70f)
                         )
                         .padding(horizontal = 10.dp, vertical = 4.dp)
                 ) {

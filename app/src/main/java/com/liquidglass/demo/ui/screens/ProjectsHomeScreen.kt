@@ -1,22 +1,16 @@
 package com.liquidglass.demo.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -30,20 +24,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.liquidglass.demo.data.models.Project
 import com.liquidglass.demo.data.models.ProjectCategory
 import com.liquidglass.demo.data.repository.SampleData
 import com.liquidglass.demo.ui.components.cards.HeroProjectCard
-import com.liquidglass.demo.ui.components.cards.MetricGlassCard
 import com.liquidglass.demo.ui.components.cards.ProjectGridCard
-import com.liquidglass.demo.ui.core.LiquidPhysics
 import com.liquidglass.demo.ui.core.bouncyClick
-import com.liquidglass.demo.ui.core.liquidGlass
 import com.liquidglass.demo.ui.core.liquidGlassPill
 import com.liquidglass.demo.ui.theme.LocalLiquidColors
 import com.liquidglass.demo.ui.theme.LocalLiquidTypography
@@ -55,6 +43,7 @@ fun ProjectsHomeScreen(
     val colors = LocalLiquidColors.current
     val typography = LocalLiquidTypography.current
     val accent = colors.activeAccent
+    val isDark = colors.isDarkMode
 
     var selectedCategory by remember { mutableStateOf(ProjectCategory.ALL) }
     val starredMap = remember {
@@ -79,7 +68,7 @@ fun ProjectsHomeScreen(
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 110.dp),
+        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 120.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Category Filter Pills Row
@@ -97,8 +86,10 @@ fun ProjectsHomeScreen(
                             .bouncyClick(onClick = { selectedCategory = category })
                             .liquidGlassPill(
                                 shape = RoundedCornerShape(50),
-                                tint = if (isSelected) accent.primary.copy(alpha = 0.20f) else Color.White.copy(alpha = 0.50f),
-                                borderColor = if (isSelected) accent.primary else Color.White.copy(alpha = 0.70f),
+                                tint = if (isSelected) accent.primary.copy(alpha = if (isDark) 0.30f else 0.20f)
+                                else (if (isDark) Color.White.copy(alpha = 0.08f) else Color.White.copy(alpha = 0.50f)),
+                                borderColor = if (isSelected) accent.bright
+                                else (if (isDark) Color.White.copy(alpha = 0.18f) else Color.White.copy(alpha = 0.70f)),
                                 borderWidth = if (isSelected) 1.5.dp else 1.dp
                             )
                             .padding(horizontal = 16.dp, vertical = 8.dp),
@@ -107,9 +98,9 @@ fun ProjectsHomeScreen(
                         Text(
                             text = category.label,
                             style = typography.titleMedium.copy(
-                                color = if (isSelected) accent.primary else colors.textSecondary,
-                                fontSize = 13.sp,
-                                fontWeight = if (isSelected) androidx.compose.ui.text.font.FontWeight.SemiBold else androidx.compose.ui.text.font.FontWeight.Medium
+                                color = if (isSelected) (if (isDark) accent.neon else accent.bright) else colors.textSecondary,
+                                fontSize = 12.5.sp,
+                                fontWeight = if (isSelected) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Normal
                             )
                         )
                     }
@@ -117,7 +108,7 @@ fun ProjectsHomeScreen(
             }
         }
 
-        // Featured Project Banner (Shown when ALL or ACTIVE is selected)
+        // Featured Project Banner
         if (selectedCategory == ProjectCategory.ALL || selectedCategory == ProjectCategory.ACTIVE) {
             item {
                 HeroProjectCard(
@@ -132,7 +123,7 @@ fun ProjectsHomeScreen(
             }
         }
 
-        // Section Title: Active Projects Counter
+        // Section Title: Available Pipelines
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -140,7 +131,7 @@ fun ProjectsHomeScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Project Pipeline",
+                    text = "Active Pipelines",
                     style = typography.titleLarge
                 )
                 Text(

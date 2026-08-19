@@ -1,30 +1,31 @@
 package com.liquidglass.demo.ui.components.icons
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /**
- * Custom 3-Line Hamburger Menu Icon with rounded ends and glass styling
+ * 3-Line Rounded Hamburger Menu Icon
  */
 @Composable
 fun LiquidMenuIcon(
     modifier: Modifier = Modifier,
     color: Color = Color(0xFF0F172A),
-    strokeWidth: Dp = 2.dp
+    strokeWidth: Dp = 2.2.dp
 ) {
     Canvas(modifier = modifier.size(20.dp)) {
         val strokePx = strokeWidth.toPx()
@@ -40,7 +41,7 @@ fun LiquidMenuIcon(
             strokeWidth = strokePx,
             cap = StrokeCap.Round
         )
-        // Middle line (full length)
+        // Middle line
         drawLine(
             color = color,
             start = Offset(0f, lineSpacing * 1.5f),
@@ -60,7 +61,70 @@ fun LiquidMenuIcon(
 }
 
 /**
- * Plus / Add Icon
+ * Theme Mode Toggle Icon (Sun / Moon)
+ */
+@Composable
+fun LiquidThemeModeIcon(
+    isDark: Boolean,
+    modifier: Modifier = Modifier,
+    color: Color = Color(0xFF0F172A)
+) {
+    val morphProgress by animateFloatAsState(
+        targetValue = if (isDark) 1f else 0f,
+        animationSpec = tween(400),
+        label = "theme_morph"
+    )
+
+    Canvas(modifier = modifier.size(20.dp)) {
+        val w = size.width
+        val h = size.height
+        val stroke = 1.8.dp.toPx()
+        val cx = w / 2f
+        val cy = h / 2f
+
+        if (morphProgress < 0.5f) {
+            // Sun Icon (Light Mode)
+            drawCircle(
+                color = color,
+                radius = w * 0.25f,
+                center = Offset(cx, cy),
+                style = Stroke(stroke)
+            )
+            // 8 Rays
+            val rayCount = 8
+            val innerR = w * 0.35f
+            val outerR = w * 0.46f
+            for (i in 0 until rayCount) {
+                val angle = (i * Math.PI * 2 / rayCount).toFloat()
+                val x1 = cx + kotlin.math.cos(angle) * innerR
+                val y1 = cy + kotlin.math.sin(angle) * innerR
+                val x2 = cx + kotlin.math.cos(angle) * outerR
+                val y2 = cy + kotlin.math.sin(angle) * outerR
+                drawLine(color, Offset(x1, y1), Offset(x2, y2), strokeWidth = stroke, cap = StrokeCap.Round)
+            }
+        } else {
+            // Moon Crescent Icon (Dark Mode)
+            val moonPath = Path().apply {
+                moveTo(cx + w * 0.1f, cy - h * 0.38f)
+                cubicTo(
+                    cx - w * 0.42f, cy - h * 0.38f,
+                    cx - w * 0.42f, cy + h * 0.38f,
+                    cx + w * 0.1f, cy + h * 0.38f
+                )
+                cubicTo(
+                    cx - w * 0.15f, cy + h * 0.22f,
+                    cx - w * 0.15f, cy - h * 0.22f,
+                    cx + w * 0.1f, cy - h * 0.38f
+                )
+                close()
+            }
+            drawPath(moonPath, color = color, style = Fill)
+        }
+    }
+}
+
+/**
+ * Plus / Add Action Icon
  */
 @Composable
 fun LiquidPlusIcon(
@@ -72,7 +136,7 @@ fun LiquidPlusIcon(
         val strokePx = strokeWidth.toPx()
         val cx = size.width / 2f
         val cy = size.height / 2f
-        val padding = size.width * 0.2f
+        val padding = size.width * 0.22f
 
         drawLine(
             color = color,
@@ -92,7 +156,7 @@ fun LiquidPlusIcon(
 }
 
 /**
- * Projects / Folder Icon
+ * Folder / Projects Icon
  */
 @Composable
 fun LiquidFolderIcon(
@@ -104,23 +168,23 @@ fun LiquidFolderIcon(
         val w = size.width
         val h = size.height
         val path = Path().apply {
-            moveTo(w * 0.1f, h * 0.25f)
-            lineTo(w * 0.4f, h * 0.25f)
-            lineTo(w * 0.5f, h * 0.38f)
-            lineTo(w * 0.9f, h * 0.38f)
-            lineTo(w * 0.9f, h * 0.85f)
-            lineTo(w * 0.1f, h * 0.85f)
+            moveTo(w * 0.1f, h * 0.26f)
+            lineTo(w * 0.42f, h * 0.26f)
+            lineTo(w * 0.52f, h * 0.38f)
+            lineTo(w * 0.90f, h * 0.38f)
+            lineTo(w * 0.90f, h * 0.84f)
+            lineTo(w * 0.1f, h * 0.84f)
             close()
         }
         if (isFilled) {
-            drawPath(path, color = color.copy(alpha = 0.25f), style = Fill)
+            drawPath(path, color = color.copy(alpha = 0.22f), style = Fill)
         }
         drawPath(path, color = color, style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round))
     }
 }
 
 /**
- * Analytics / Chart Pulse Icon
+ * Analytics / Telemetry Bar Icon
  */
 @Composable
 fun LiquidAnalyticsIcon(
@@ -133,24 +197,23 @@ fun LiquidAnalyticsIcon(
         val h = size.height
         val stroke = 2.dp.toPx()
 
-        // 3 Vertical Bars
         drawRoundRect(
             color = color,
-            topLeft = Offset(w * 0.15f, h * 0.55f),
-            size = Size(w * 0.18f, h * 0.35f),
+            topLeft = Offset(w * 0.14f, h * 0.52f),
+            size = Size(w * 0.18f, h * 0.36f),
             cornerRadius = CornerRadius(4.dp.toPx(), 4.dp.toPx()),
             style = if (isFilled) Fill else Stroke(stroke)
         )
         drawRoundRect(
             color = color,
-            topLeft = Offset(w * 0.41f, h * 0.25f),
-            size = Size(w * 0.18f, h * 0.65f),
+            topLeft = Offset(w * 0.41f, h * 0.22f),
+            size = Size(w * 0.18f, h * 0.66f),
             cornerRadius = CornerRadius(4.dp.toPx(), 4.dp.toPx()),
             style = Fill
         )
         drawRoundRect(
             color = color,
-            topLeft = Offset(w * 0.67f, h * 0.40f),
+            topLeft = Offset(w * 0.68f, h * 0.38f),
             size = Size(w * 0.18f, h * 0.50f),
             cornerRadius = CornerRadius(4.dp.toPx(), 4.dp.toPx()),
             style = if (isFilled) Fill else Stroke(stroke)
@@ -159,7 +222,7 @@ fun LiquidAnalyticsIcon(
 }
 
 /**
- * Workspace / Canvas Grid Icon
+ * Workspace Canvas Grid Icon
  */
 @Composable
 fun LiquidWorkspaceIcon(
@@ -233,36 +296,7 @@ fun LiquidStarIcon(
         if (isFilled) {
             drawPath(path, color = color, style = Fill)
         }
-        drawPath(path, color = color, style = Stroke(width = 1.5.dp.toPx(), cap = StrokeCap.Round))
-    }
-}
-
-/**
- * Search Icon
- */
-@Composable
-fun LiquidSearchIcon(
-    modifier: Modifier = Modifier,
-    color: Color = Color(0xFF64748B)
-) {
-    Canvas(modifier = modifier.size(18.dp)) {
-        val stroke = 2.dp.toPx()
-        val radius = size.width * 0.35f
-        val center = Offset(size.width * 0.42f, size.height * 0.42f)
-
-        drawCircle(
-            color = color,
-            radius = radius,
-            center = center,
-            style = Stroke(stroke)
-        )
-        drawLine(
-            color = color,
-            start = Offset(center.x + radius * 0.7f, center.y + radius * 0.7f),
-            end = Offset(size.width * 0.92f, size.height * 0.92f),
-            strokeWidth = stroke,
-            cap = StrokeCap.Round
-        )
+        drawPath(path, color = color, style = Stroke(width = 1.6.dp.toPx(), cap = StrokeCap.Round))
     }
 }
 
@@ -288,7 +322,7 @@ fun LiquidBellIcon(
         drawPath(bellPath, color = color, style = Stroke(stroke, cap = StrokeCap.Round))
         drawCircle(
             color = color,
-            radius = 2.dp.toPx(),
+            radius = 2.2.dp.toPx(),
             center = Offset(w * 0.5f, h * 0.88f)
         )
     }
@@ -301,14 +335,14 @@ fun LiquidBellIcon(
 fun LiquidCheckIcon(
     modifier: Modifier = Modifier,
     color: Color = Color.White,
-    strokeWidth: Dp = 2.dp
+    strokeWidth: Dp = 2.2.dp
 ) {
     Canvas(modifier = modifier.size(16.dp)) {
         val strokePx = strokeWidth.toPx()
         val path = Path().apply {
-            moveTo(size.width * 0.2f, size.height * 0.5f)
-            lineTo(size.width * 0.45f, size.height * 0.75f)
-            lineTo(size.width * 0.85f, size.height * 0.25f)
+            moveTo(size.width * 0.18f, size.height * 0.50f)
+            lineTo(size.width * 0.42f, size.height * 0.74f)
+            lineTo(size.width * 0.86f, size.height * 0.24f)
         }
         drawPath(path, color = color, style = Stroke(strokePx, cap = StrokeCap.Round))
     }
@@ -325,7 +359,7 @@ fun LiquidCloseIcon(
 ) {
     Canvas(modifier = modifier.size(18.dp)) {
         val strokePx = strokeWidth.toPx()
-        val pad = size.width * 0.2f
+        val pad = size.width * 0.22f
         drawLine(
             color = color,
             start = Offset(pad, pad),

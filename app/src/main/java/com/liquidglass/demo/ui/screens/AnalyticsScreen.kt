@@ -1,6 +1,5 @@
 package com.liquidglass.demo.ui.screens
 
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,7 +18,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,16 +28,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.liquidglass.demo.data.repository.SampleData
 import com.liquidglass.demo.ui.components.cards.MetricGlassCard
-import com.liquidglass.demo.ui.components.icons.LiquidAnalyticsIcon
-import com.liquidglass.demo.ui.components.icons.LiquidCheckIcon
-import com.liquidglass.demo.ui.core.LiquidPhysics
-import com.liquidglass.demo.ui.core.bouncyClick
 import com.liquidglass.demo.ui.core.liquidGlass
 import com.liquidglass.demo.ui.core.liquidGlassPill
-import com.liquidglass.demo.ui.core.liquidGlow
-import com.liquidglass.demo.ui.theme.LiquidBlue
-import com.liquidglass.demo.ui.theme.LiquidRed
-import com.liquidglass.demo.ui.theme.LiquidYellow
+import com.liquidglass.demo.ui.theme.LiquidBlueBright
+import com.liquidglass.demo.ui.theme.LiquidRedBright
+import com.liquidglass.demo.ui.theme.LiquidYellowBright
 import com.liquidglass.demo.ui.theme.LocalLiquidColors
 import com.liquidglass.demo.ui.theme.LocalLiquidTypography
 
@@ -49,13 +42,11 @@ fun AnalyticsScreen(
 ) {
     val colors = LocalLiquidColors.current
     val typography = LocalLiquidTypography.current
-    val accent = colors.activeAccent
-
     val metrics = remember { SampleData.sampleMetrics }
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 110.dp),
+        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 120.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Section Header
@@ -109,6 +100,7 @@ private fun VelocityChartCard() {
     val colors = LocalLiquidColors.current
     val typography = LocalLiquidTypography.current
     val accent = colors.activeAccent
+    val isDark = colors.isDarkMode
 
     val days = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
     val heights = listOf(0.45f, 0.70f, 0.55f, 0.90f, 0.65f, 0.85f, 0.95f)
@@ -118,14 +110,9 @@ private fun VelocityChartCard() {
             .fillMaxWidth()
             .liquidGlass(
                 shape = RoundedCornerShape(26.dp),
-                elevation = 6.dp,
-                borderWidth = 1.2.dp,
-                backgroundBrush = Brush.verticalGradient(
-                    colors = listOf(
-                        Color.White.copy(alpha = 0.85f),
-                        Color.White.copy(alpha = 0.55f)
-                    )
-                )
+                elevation = 8.dp,
+                borderWidth = 1.3.dp,
+                enableShimmer = true
             )
             .padding(20.dp)
     ) {
@@ -138,7 +125,7 @@ private fun VelocityChartCard() {
                 Column {
                     Text(
                         text = "Weekly Velocity",
-                        style = typography.titleLarge.copy(fontSize = 17.sp)
+                        style = typography.titleLarge
                     )
                     Text(
                         text = "Average 8.4 tasks / day",
@@ -149,15 +136,15 @@ private fun VelocityChartCard() {
                 Box(
                     modifier = Modifier
                         .liquidGlassPill(
-                            tint = accent.primary.copy(alpha = 0.15f),
-                            borderColor = accent.primary.copy(alpha = 0.35f)
+                            tint = accent.primary.copy(alpha = if (isDark) 0.25f else 0.15f),
+                            borderColor = accent.bright.copy(alpha = if (isDark) 0.60f else 0.40f)
                         )
                         .padding(horizontal = 10.dp, vertical = 4.dp)
                 ) {
                     Text(
                         text = "+24.5%",
                         style = typography.labelSmall.copy(
-                            color = accent.primary,
+                            color = if (isDark) accent.neon else accent.bright,
                             fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
                         )
                     )
@@ -193,8 +180,8 @@ private fun VelocityChartCard() {
                                     if (isPeak) accent.brush
                                     else Brush.verticalGradient(
                                         colors = listOf(
-                                            accent.primary.copy(alpha = 0.50f),
-                                            accent.primary.copy(alpha = 0.20f)
+                                            accent.bright.copy(alpha = if (isDark) 0.60f else 0.45f),
+                                            accent.primary.copy(alpha = if (isDark) 0.20f else 0.15f)
                                         )
                                     )
                                 )
@@ -203,7 +190,7 @@ private fun VelocityChartCard() {
                         Text(
                             text = day,
                             style = typography.labelSmall.copy(
-                                color = if (isPeak) accent.primary else colors.textTertiary,
+                                color = if (isPeak) (if (isDark) accent.neon else accent.bright) else colors.textTertiary,
                                 fontSize = 11.sp,
                                 fontWeight = if (isPeak) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Normal
                             )
@@ -225,15 +212,15 @@ private fun HealthDistributionCard() {
             .fillMaxWidth()
             .liquidGlass(
                 shape = RoundedCornerShape(24.dp),
-                elevation = 4.dp,
-                borderWidth = 1.dp
+                elevation = 5.dp,
+                borderWidth = 1.1.dp
             )
             .padding(18.dp)
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             Text(
                 text = "Pipeline Distribution",
-                style = typography.titleLarge.copy(fontSize = 16.sp)
+                style = typography.titleLarge
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -249,19 +236,19 @@ private fun HealthDistributionCard() {
                     modifier = Modifier
                         .weight(0.55f)
                         .fillMaxSize()
-                        .background(LiquidBlue)
+                        .background(LiquidBlueBright)
                 )
                 Box(
                     modifier = Modifier
                         .weight(0.30f)
                         .fillMaxSize()
-                        .background(LiquidYellow)
+                        .background(LiquidYellowBright)
                 )
                 Box(
                     modifier = Modifier
                         .weight(0.15f)
                         .fillMaxSize()
-                        .background(LiquidRed)
+                        .background(LiquidRedBright)
                 )
             }
 
@@ -272,9 +259,9 @@ private fun HealthDistributionCard() {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                LegendItem(label = "Active (55%)", color = LiquidBlue)
-                LegendItem(label = "Review (30%)", color = LiquidYellow)
-                LegendItem(label = "Urgent (15%)", color = LiquidRed)
+                LegendItem(label = "Active (55%)", color = LiquidBlueBright)
+                LegendItem(label = "Review (30%)", color = LiquidYellowBright)
+                LegendItem(label = "Urgent (15%)", color = LiquidRedBright)
             }
         }
     }
