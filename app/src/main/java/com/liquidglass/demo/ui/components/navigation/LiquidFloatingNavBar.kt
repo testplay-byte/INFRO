@@ -115,7 +115,7 @@ fun LiquidFloatingNavBar(
 
                 val itemColor by animateColorAsState(
                     targetValue = if (isSelected) accent.primary else colors.textSecondary,
-                    animationSpec = LiquidPhysics.BouncySpringSpec,
+                    animationSpec = androidx.compose.animation.core.tween(250),
                     label = "tab_color"
                 )
 

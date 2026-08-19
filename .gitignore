@@ -13,3 +13,5 @@
 .externalNativeBuild
 .cxx
 local.properties
+*.ps1
+*.log
