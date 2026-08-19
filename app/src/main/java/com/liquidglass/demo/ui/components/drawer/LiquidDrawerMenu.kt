@@ -192,7 +192,7 @@ fun LiquidDrawerMenu(
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
-                                    .bouncyClick(onClick = { themeController.setDarkMode(false) })
+                                    .bouncyClick(onClick = { themeController.applyDarkMode(false) })
                                     .then(
                                         if (!isDark) {
                                             Modifier.liquidGlassPill(
@@ -223,7 +223,7 @@ fun LiquidDrawerMenu(
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
-                                    .bouncyClick(onClick = { themeController.setDarkMode(true) })
+                                    .bouncyClick(onClick = { themeController.applyDarkMode(true) })
                                     .then(
                                         if (isDark) {
                                             Modifier.liquidGlassPill(

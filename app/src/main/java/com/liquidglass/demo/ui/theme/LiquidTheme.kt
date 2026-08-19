@@ -70,7 +70,7 @@ class LiquidThemeController(
         isDarkMode = !isDarkMode
     }
 
-    fun setDarkMode(dark: Boolean) {
+    fun applyDarkMode(dark: Boolean) {
         isDarkMode = dark
     }
 
